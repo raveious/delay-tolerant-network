@@ -16,7 +16,7 @@ After checking out this repository, you have to update the submodule(s) and buil
 $ ./develop.sh
 ```
 
-Any issues with this, refer to the [alternet instructions](https://github.com/tinyos/tinyos-main#note-new-make-system-and-tinyos-tools) and report issues to the [TinyOS][2] mainline repository.
+Any issues with this, refer to the [alternate instructions](https://github.com/tinyos/tinyos-main#note-new-make-system-and-tinyos-tools) and report issues to the [TinyOS][2] mainline repository.
 
 ### Building
 
