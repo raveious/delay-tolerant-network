@@ -1,3 +1,4 @@
 [submodule "tinyos-main"]
 	path = tinyos-main
 	url = https://github.com/tinyos/tinyos-main
+	ignore = dirty

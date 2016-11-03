@@ -33,4 +33,4 @@
 *.su
 
 # TinyOS
-/tinyos-main/*
+/build/*
