@@ -1,8 +1,8 @@
-# Delay Tolerant Network Implementation for Telos using TinyOS
+# Delay Tolerant Network Implementation using TinyOS
 
 ## Purpose
 
-Exploration in the area of a delay tolerant network of wireless sensor nodes. Starting with an initial implimentation of the a [spray and wait][1] routing protocol.
+Exploration in the area of a delay tolerant network of wireless sensor nodes. Starting with an initial implimentation of the a [spray and wait][1] routing protocol on the [TelosB][3].
 
 Afterwards, reasearch and optimation for a smaller network of Wireless Sensor Nodes.
 
@@ -20,7 +20,7 @@ Any issues with this, refer to the [alternate instructions](https://github.com/t
 
 ### Building
 
-For this project, the main board that is being used is the TelosB. However, [TinyOS][2] supports many other boards.
+For this project, the main board that is being used is the [TelosB][3]. However, [TinyOS][2] supports many other boards.
 
 From the root project directory, run make from the shell.
 
@@ -36,3 +36,4 @@ $ make telosb install
 
 [1]: https://en.wikipedia.org/wiki/Routing_in_delay-tolerant_networking#Spray_and_Wait
 [2]: https://github.com/tinyos/tinyos-main
+[3]: http://www.memsic.com/wireless-sensor-networks/TPR2420
