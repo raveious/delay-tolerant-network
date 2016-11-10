@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Exploration in the area of a delay tolerant network of wireless sensor nodes.
+Exploration in the area of a [Delay Tolerant Network][2] of wireless sensor nodes.
 
 ## Development
 
@@ -22,10 +22,11 @@ Note: You will need to be a member of the `dialout` group in order to write code
 
 ## Areas of Research
 
-These are some of out different approaches that we are conducting research within delay tolerant networks.
+These are some of out different approaches that we are conducting research within [Delay Tolerant Networks][2].
 
  * [Spray and Wait](./Spray_and_Wait)
  * [Spray and Focus](./Spray_and_Focus)
  * [Utility (RAPID)](./Util_Routing)
 
  [1]: https://github.com/tinyos/tinyos-main
+ [2]: https://en.wikipedia.org/wiki/Delay-tolerant_networking
