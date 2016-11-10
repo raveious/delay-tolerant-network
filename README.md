@@ -1,5 +1,5 @@
 # Delay Tolerant Network Implementation using TinyOS
-
+[![Build Status](https://travis-ci.org/raveious/delay-tolerant-network.svg?branch=master)](https://travis-ci.org/raveious/delay-tolerant-network)
 ## Purpose
 
 Exploration in the area of a [Delay Tolerant Network][2] of wireless sensor nodes.
