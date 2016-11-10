@@ -26,5 +26,6 @@ These are some of out different approaches that we are conducting research withi
 
  * [Spray and Wait](./Spray_and_Wait)
  * [Spray and Focus](./Spray_and_Focus)
+ * [Utility (RAPID)](./Util_Routing)
 
  [1]: https://github.com/tinyos/tinyos-main
