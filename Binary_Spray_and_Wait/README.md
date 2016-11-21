@@ -1,6 +1,6 @@
 # Spray and Focus
 
-This is our implementation of the [Spray and Focus][1] protocol for a [Delay Tolerant Network][2].
+This is our implementation of the [Binary Spray and Focus][1] protocol for a [Delay Tolerant Network][2].
 
 ## Purpose
 

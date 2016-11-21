@@ -24,8 +24,8 @@ Note: You will need to be a member of the `dialout` group in order to write code
 
 These are some of out different approaches that we are conducting research within [Delay Tolerant Networks][2].
 
- * [Spray and Wait](./Spray_and_Wait)
- * [Spray and Focus](./Spray_and_Focus)
+ * [Vanilla Spray and Wait](./Spray_and_Wait)
+ * [Binary Spray and Wait](./Binary_Spray_and_Wait)
  * [Utility (RAPID)](./Util_Routing)
 
  [1]: https://github.com/tinyos/tinyos-main
