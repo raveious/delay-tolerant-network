@@ -34,3 +34,7 @@
 
 # TinyOS
 */build/*
+
+# Working files
+*.*~
+*~
