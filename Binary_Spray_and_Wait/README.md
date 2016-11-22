@@ -1,8 +1,17 @@
-# Spray and Focus
+# Binary Spray and Wait
 
-This is our implementation of the [Binary Spray and Wait][1] protocol for a [Delay Tolerant Network][2].
+This is an implementation of the [Binary Spray and Wait][1] protocol for a [Delay Tolerant Network][2].
+
+Traditionally with the [Spray and Wait][1] routing protocol, a source node will only send out packets to nodes which do not already have it. In this implementation, when a new node in encountered, the source node will pass "half" of the copies to the new node. Both nodes will then continue to pass out "half" of their stacks until all copies have been distriduted out.
 
 ## Purpose
+
+The goals of this implementation are:
+ * See battery life gets affected
+   * On the network as a whole
+   * On node that stay nearby the source for longer durations of time
+   * On the source node while surrounding nodes are moving around
+ * Distribution of the information in a more efficient way
 
 ## Development
 

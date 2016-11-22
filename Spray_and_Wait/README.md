@@ -1,8 +1,14 @@
-# Spray and Wait
+# Vanilla Spray and Wait
 
-This is our implementation of the [Spray and Wait][1] protocol for a [Delay Tolerant Network][2].
+This is an implementation of a traditional [Spray and Wait][1] protocol for a [Delay Tolerant Network][2]. A source node will only send out packets to nodes which do not already have it. It does this by asking the newly encountered node whether or not it already has the packet and forward the data on if it doesn't.
 
 ## Purpose
+
+The goals of this implementation are:
+ * See battery life gets affected
+   * On the network as a whole
+   * On node that stay nearby the source for longer durations of time
+   * On the source node while surrounding nodes are moving around
 
 ## Development
 
