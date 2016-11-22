@@ -4,13 +4,5 @@
 git submodule init
 git submodule update
 
-# Build TinyOS tools
-cd tinyos-main/tools
-./Bootstrap
-./configure
-make
-sudo make install
-cd ../..
-
-# MSP430 utilities
-sudo apt-get -y install gcc-msp430
+# Get TinyOS tools from package manager
+sudo apt-get -y install automake tinyos-tools
