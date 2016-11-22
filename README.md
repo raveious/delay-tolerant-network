@@ -10,7 +10,20 @@ We learned that the build process is sometimes difficult for developers who are 
 
 ### Checking out
 
-After checking out this repository, you have to update the submodule(s) and build all of the tools from TinyOS. Note, this is only needed the first time and will probably never be needed again after that unless [TinyOS][1] updates it's build tools.
+After checking out this repository, you have to update the submodule(s). This will get TinyOS into your checkout.
+
+```
+$ git submodule init
+$ git submodule update
+```
+
+You can build the tools out of the [TinyOS][1] checkout or install all of the tools from the package manager.
+
+```
+$ apt-get install automake tinyos-tools
+```
+
+There exists a script which runs all of this which only needs to be ran the first time this is checked out.
 
 ```
 $ ./develop.sh
