@@ -2,7 +2,7 @@
 
 This is an implementation of the [Binary Spray and Wait][1] protocol for a [Delay Tolerant Network][2].
 
-Traditionally with the [Spray and Wait][1] routing protocol, a source node will only send out packets to nodes which do not already have it. In this implementation, when a new node in encountered, the source node will pass "half" of the copies to the new node. Both nodes will then continue to pass out "half" of their stacks until all copies have been distriduted out.
+Traditionally with the [Spray and Wait][3] routing protocol, a source node will only send out packets to nodes which do not already have it. In this implementation, when a new node in encountered, the source node will pass "half" of the copies to the new node. Both nodes will then continue to pass out "half" of their stacks until all copies have been distriduted out.
 
 ## Purpose
 
@@ -15,7 +15,7 @@ The goals of this implementation are:
 
 ## Development
 
-For this project, the main board that is being used is the [TelosB][4]. However, [TinyOS][3] supports many other boards.
+For this project, the main board that is being used is the [TelosB][4]. However, [TinyOS][5] supports many other boards.
 
 From the root project directory, run make from the shell.
 
@@ -33,5 +33,6 @@ Note: You will need to be a member of the `dialout` group in order to write code
 
 [1]: https://en.wikipedia.org/wiki/Routing_in_delay-tolerant_networking#Spray_and_Wait_versions
 [2]: https://en.wikipedia.org/wiki/Delay-tolerant_networking
-[3]: https://github.com/tinyos/tinyos-main
+[3]: https://en.wikipedia.org/wiki/Routing_in_delay-tolerant_networking#Spray_and_Wait
 [4]: http://www.memsic.com/wireless-sensor-networks/TPR2420
+[5]: https://github.com/tinyos/tinyos-main
