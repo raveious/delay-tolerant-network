@@ -11,11 +11,11 @@ module SaWC {
 		interface AMSend;
 		interface Receive;
 		interface SplitControl as AMControl;
-		interface Timer<Milli> as BroadcastTimer;
+		interface Timer<TMilli> as BroadcastTimer;
 		interface Packet;
 	}
-	provide {
-		interface AMSend;
+	provides {
+		interface AMSend as AMSendQueue;
 	}
 }
 implementation {

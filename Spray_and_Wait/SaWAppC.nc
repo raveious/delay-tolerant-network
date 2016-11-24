@@ -12,4 +12,7 @@ implementation {
 	SaWC.BroadcastTimer -> TimerMilliC;
 	SaWC.AMControl -> ActiveMessageC;
 	
+
+	AppC.AMSend -> SaWC.AMSendQuene;
+	AppC.Leds -> LedsC;
 }
