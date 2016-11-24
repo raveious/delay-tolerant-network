@@ -13,6 +13,6 @@ implementation {
 	SaWC.AMControl -> ActiveMessageC;
 	
 
-	AppC.AMSend -> SaWC.AMSendQuene;
+	AppC.AMSend -> SaWC.AMSendQueue;
 	AppC.Leds -> LedsC;
 }
