@@ -28,7 +28,7 @@ To program a TelosB board directly, add the install target.
 $ make telosb install,n
 ```
 
-where `n` is the node ID
+where `n` is the optional node ID.
 
 Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device. Virtual Machine users will also have to allow the virtual machine access to the USB serial device so that it can be programmed from within the virtual machine. You may also need to be a member of the VMs group (i.e. `vboxsf` for Oracle Virtual Box) if this is checked out in a shaired directory with host machine.
 
