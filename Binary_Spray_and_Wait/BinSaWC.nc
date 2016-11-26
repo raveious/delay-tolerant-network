@@ -29,6 +29,7 @@ implementation {
 
 	event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
 		// TODO check the type of packet, probably reply with another msg
+		// 	should hand out half of its stacks
 	}
 
 	event void BroadcastTimer.fired() {
