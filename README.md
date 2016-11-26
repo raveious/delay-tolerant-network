@@ -40,6 +40,7 @@ These are some of out different approaches that we are conducting research withi
  * Spray and Wait
    * [Vanilla Spray and Wait](./Spray_and_Wait)
    * [Binary Spray and Wait](./Binary_Spray_and_Wait)
+   * [Spray and Pray](./Spray_and_Pray)
  * [Utility (RAPID)](./Util_Routing)
 
  [1]: https://github.com/tinyos/tinyos-main
