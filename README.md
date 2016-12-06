@@ -4,7 +4,7 @@
 
 Exploration in the area of a [Delay Tolerant Network][2] of wireless sensor nodes.
 
-## Areas of Research
+## Areas of Implementation Research
 
 These are some of out different approaches that we are conducting research within [Delay Tolerant Networks][2].
 
@@ -13,6 +13,10 @@ These are some of out different approaches that we are conducting research withi
    * [Binary Spray and Wait](./Binary_Spray_and_Wait)
    * [Spray and Pray](./Spray_and_Pray)
  * [Utility (RAPID)](./Util_Routing)
+
+## Areas of Simulation Research
+
+
 
 ## Development
 
