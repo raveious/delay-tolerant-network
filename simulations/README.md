@@ -1,7 +1,7 @@
 Simulation
 
 In Progress:
-Spray and Wait
+Spray and Wait.
 Arguements:
 
 1. Range - How far can nodes hear and send?  Accepts 1 or more
