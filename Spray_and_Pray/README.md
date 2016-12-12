@@ -33,6 +33,13 @@ where `n` is the optional node ID.
 
 Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device. Virtual Machine users will also have to allow the virtual machine access to the USB serial device so that it can be programmed from within the virtual machine. You may also need to be a member of the VMs group (i.e. `vboxsf` for Oracle Virtual Box) if this is checked out in a shaired directory with host machine.
 
+
+## Testing Procedure
+
+All node in the network were each given an ID via the install command above. In a relatively large room, several of these node were plugin into USB charging adaptors for cell phone and others had batteries. The source node is at one end of the room while the destination node is on the other end of the room.
+
+In a Spray and Pray network, the first node to encouter the original node were "Sprayed" with the packet and traveled to the destination node. When coming within range of the destination node, the packet was passed to it and no other nodes along the way.
+
 [1]: https://en.wikipedia.org/wiki/Routing_in_delay-tolerant_networking#Spray_and_Wait
 [2]: https://en.wikipedia.org/wiki/Delay-tolerant_networking
 [3]: https://github.com/tinyos/tinyos-main

@@ -35,6 +35,14 @@ where `n` is the optional node ID.
 
 Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device. Virtual Machine users will also have to allow the virtual machine access to the USB serial device so that it can be programmed from within the virtual machine. You may also need to be a member of the VMs group (i.e. `vboxsf` for Oracle Virtual Box) if this is checked out in a shaired directory with host machine.
 
+## Testing Procedure
+
+All node in the network were each given an ID via the install command above. In a relatively large room, several of these node were plugin into USB charging adaptors for cell phone and others had batteries. The source node is at one end of the room while the destination node is on the other end of the room.
+
+In a Binary Spray and Wait network, the first node to encouter the original node were "Sprayed" and received half of the available packets and traveled to the destination node. When coming within range of another new node, that new node will also be "Sprayed", half the available packets were sent. This process is continued until all available copies are distriduted and the destination node is reached.
+
+The destination node then repeats the process by sending an acknowledgement back to the source using the same technique.
+
 [1]: https://en.wikipedia.org/wiki/Routing_in_delay-tolerant_networking#Spray_and_Wait_versions
 [2]: https://en.wikipedia.org/wiki/Delay-tolerant_networking
 [3]: https://en.wikipedia.org/wiki/Routing_in_delay-tolerant_networking#Spray_and_Wait
