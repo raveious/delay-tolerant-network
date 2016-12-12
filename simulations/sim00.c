@@ -149,39 +149,6 @@ int main(int argc, char *argv[]) {
 						motes[k].y = j;
 						motes[k].z = 0;				
 						testGrid[i][j][0] = k++;
-					}
-				}	
-			}		
-		
-		}		
-		
-		// Finish Initializing Node Variables
-		for( k=0; k<numNodes; k++ ){
-			motes[k].helloTimer = random() % HELLO_WAIT;			
-			motes[k].srcFlag = -1;	
-			motes[k].dstID = -1;	
-			motes[k].id = k;
-			motes[k].status = 0;
-			motes[k].sendPriority = 0;
-			motes[k].msgCopies = srcCopies;		
-			for( w=0; w<numNodes; w++ ){
-				motes[k].nodesSeen[w] = SEEN_TIME_MAX;
-				motes[k].msgToSend[w] = 0;
-				motes[k].buffExpire[w] = 0;
-				for( u=0; u<numNodes; u++ ){
-					motes[k].msgBuff[w].nodesFound[u] = -1;
-					
-				}	
-			}
-			/* Initialize its I am here message */
-			motes[k].helloMsg.msgID = 0;
-			motes[k].helloMsg.msgType = 0;
-			motes[k].helloMsg.srcID = -1;
-			motes[k].helloMsg.finalDestID = -1;
-			motes[k].helloMsg.currSrcID = k;
-			motes[k].helloMsg.currDestID = -1;
-			motes[k].helloMsg.numHops = -1;
-			motes[k].helloMsg.numCopies = -1;			
 /*
  * sim00.c
  * Spray and Wait
@@ -348,7 +315,7 @@ int main(int argc, char *argv[]) {
 			motes[k].status = 0;
 			motes[k].sendPriority = 0;
 			motes[k].msgCopies = srcCopies;		
-			for( w=0; w<numNodes; w++ ){
+			for( w=0; w<numNodes+1; w++ ){
 				motes[k].nodesSeen[w] = SEEN_TIME_MAX;
 				motes[k].buffExpire[w] = 0;
 				for( u=0; u<numNodes; u++ ){
@@ -433,11 +400,11 @@ int main(int argc, char *argv[]) {
 							else if( motes[k].inMsg->msgType == 1 ){
 
 								if( (motes[k].inMsg->msgID == 2) && (motes[k].inMsg->currSrcID == motes[k].dstID) ){
-									printf("Src got dst's ack from dst, Line 252\n");
+									printf("****TEST DONE*****Source heard back from Destination Directly, 252\n");
 									done = 1;
 								}
 								else if( (motes[k].inMsg->msgID == 2) ){
-									printf("Src got dst's ack msg from relay, 256\n");
+									printf("****TEST DONE****Source heard back from Destination through a relay, 256\n");
 									done = 1;
 								}
 								else{
@@ -445,16 +412,17 @@ int main(int argc, char *argv[]) {
 								}
 							
 							}
-							/* if motes[k].inMsg->msgType == 2, an ACK */
+							/* if of Type 2, it's an ACK */
 							else{
 								if( motes[k].inMsg->currDestID == k ){
 									if( motes[k].inMsg->currSrcID == motes[k].dstID ){
-										printf("Messaging done, src got ack from dst, 268\n");
+										printf("****TEST DONE****Source got Ack Direct from Destination\n");
 										done = 1;
 									}
 									/* ACK was from relay that heard message */
 									else{
 										motes[k].msgCopies--;
+										
 									}
 								}	
 								
@@ -486,6 +454,7 @@ int main(int argc, char *argv[]) {
 
 					bufferPtr = -1;
 					u = ACK_WAIT + 1;
+					
 					for( i=0,j=0; i<numNodes; i++ ){
 						if( j < 1 && ( motes[k].buffExpire[ i ] == 0 ) ){
 							j++;
@@ -493,30 +462,34 @@ int main(int argc, char *argv[]) {
 							i = numNodes;
 						}				
 						if( (motes[k].buffExpire[ i ] > 0) 
-								&& motes[k].buffExpire[ i ] < u ){
+								&& (motes[k].buffExpire[ i ] < u) ){
+							
 							bufferPtr = i;
 							u = motes[k].buffExpire[ i ];
+							
 						}
 					}								
 					
 					/* I receieved Message */
 					if( motes[k].inMsg != 0 ){
 						/* Dst node recieves message addressed to it, sets status to 1 */
-						if( (motes[k].status == 0) && (motes[k].inMsg->finalDestID == k) ){
+						if( (motes[k].status == 0) && (motes[k].inMsg->finalDestID == k) 
+								&& (motes[k].inMsg->msgType == 1) ){
 							motes[k].dstID = motes[k].inMsg->srcID;
-							motes[k].status == 1;
+							motes[k].status = 1;
 							if( motes[k].inMsg->currSrcID == motes[k].inMsg->srcID )
-								printf("Got message at 325 from Source \n");
+								printf("*****Dst got message at 325 from Source \n");
 							else
-								printf("Got message at 325 from Relay Node: \n%d", motes[k].inMsg->currSrcID );
+								printf("*****DST got message at 325 from Relay Node: \n%d", motes[k].inMsg->currSrcID );
 														
 							//done = 1;
 						}
 						/* Code block used by Dst node when acking SRC */
 						if( (motes[k].status == 1) ){
 							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
-							if( motes[k].inMsg->currSrcID == motes[k].dstID ){
-
+							/* Msg from Src, DST ACKS BACK */
+							if( motes[k].inMsg->currSrcID == motes[k].inMsg->srcID ){
+								
 								motes[k].msgBuff[ bufferPtr ].msgID = 2;
 								motes[k].msgBuff[ bufferPtr ].msgType = 2;
 								motes[k].msgBuff[ bufferPtr ].srcID = k;
@@ -529,57 +502,53 @@ int main(int argc, char *argv[]) {
 								motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;
 							}
 							/* Got Hello from Relay */
-							else if( motes[k].inMsg->msgType == 0 ){
+							else if( (motes[k].inMsg->msgType == 0) || (motes[k].inMsg->msgType == 1) ){
+							
 								motes[k].sendPriority = 1;	
 							}
-							/* Relay delivering message to me */
-							else if( (motes[k].inMsg->msgID == 1) && (motes[k].inMsg->finalDestID == k) ){
-								motes[k].msgBuff[ bufferPtr ].msgID = 1;
-								motes[k].msgBuff[ bufferPtr ].msgType = 2;
-								motes[k].msgBuff[ bufferPtr ].srcID = motes[k].dstID;
-								motes[k].msgBuff[ bufferPtr ].finalDestID = k;
-								motes[k].msgBuff[ bufferPtr ].currSrcID = k;
-								motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].inMsg->currSrcID;
-								motes[k].msgBuff[ bufferPtr ].numHops = 0;
-								motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
-								motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;					
-							}
+					
+							
 							/* ACK from relay or Src */
 							else if( (motes[k].inMsg->msgType == 2) && (motes[k].inMsg->currDestID == k) 
 									&& (motes[k].inMsg->msgID == 2) ){
 
 								/* Src got ACK from Dst, know DST got its original message */
 								if( motes[k].inMsg->currSrcID == motes[k].dstID ){
-									printf("Test done, dst got ack from source, 280\n");
+									//printf("Src: %d, Dst: %d, 373\n", motes[k].dstID, motes[k].inMsg->currSrcID);
+									printf("*****TEST DONE******, Dst got ack direct from source, 367\n");
 									done = 1;
 								}
 								/* ACK was from relay that heard message */
 								else{
 									motes[k].msgCopies--;
+									
 								}
 																
 							}
 							else{
 								/* Message had ID of 2 from relay, ignore, 
 								 * it's a copy of what I already sent out */
+								 
 							}
 							
 						}
 						else{
 							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
+							/* I'm Here Message Recieved */
 							if( motes[k].inMsg->msgType == 0 ){
 								/* If hello sent from destination node, say hello back sooner */
 								if( motes[k].helloMsg.finalDestID == motes[k].inMsg->currSrcID  ){
 									motes[k].sendPriority = 1;	
+								
 								}
 							}
-							/* If message is a relay message from eithe source or relay */
+							/* If message is a relay message from either source or relay */
 							else if( motes[k].inMsg->msgType == 1 ){
 								/* Relay message from a source and not a relay */
 								if( motes[k].inMsg->srcID == motes[k].inMsg->currSrcID ){
 									/* Change I'm Here Message to Relay message*/
-									if( motes[k].helloMsg.msgID < motes[k].inMsg->msgID 
-											&& motes[k].inMsg->numCopies > 0 ){
+									if( (motes[k].helloMsg.msgID < motes[k].inMsg->msgID) 
+											&& (motes[k].inMsg->numCopies > 0) ){
 										motes[k].helloMsg.msgID = motes[k].inMsg->msgID;
 										motes[k].helloMsg.msgType = 1;
 										motes[k].helloMsg.srcID = motes[k].inMsg->srcID;
@@ -589,7 +558,7 @@ int main(int argc, char *argv[]) {
 										motes[k].helloMsg.numCopies = -1;
 										motes[k].helloMsg.numHops = motes[k].inMsg->numHops + 1;;		
 										motes[k].helloMsg.nodesFound[1] = k;		
-
+										
 										motes[k].msgBuff[ bufferPtr ].msgID = motes[k].inMsg->msgID;
 										motes[k].msgBuff[ bufferPtr ].msgType = 2;
 										motes[k].msgBuff[ bufferPtr ].srcID = motes[k].inMsg->srcID;
@@ -599,7 +568,7 @@ int main(int argc, char *argv[]) {
 										motes[k].msgBuff[ bufferPtr ].numHops = 0;
 										motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
 										motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;
-										motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
+									
 									}
 								}
 								/* I don't have current relay message, add new message to deliver */
@@ -630,12 +599,14 @@ int main(int argc, char *argv[]) {
 						/* See if there's a message to send in buffer */
 						bufferPtr = -1;
 						u = ACK_WAIT + 1;
+						
 						for( i=0; i<numNodes; i++ ){
 							
 							if( (motes[k].buffExpire[ i ] > 0) 
-									&& motes[k].buffExpire[ i ] < u ){
+									&& (motes[k].buffExpire[ i ] < u) ){
 								bufferPtr = i;
 								
+
 							}
 						}						
 						if( motes[k].status == 1 ){
@@ -643,7 +614,7 @@ int main(int argc, char *argv[]) {
 							/* If no message to send in buffer, send Hello */
 							if( (motes[k].helloTimer == 0) && (bufferPtr == -1) ){
 								motes[k].helloMsg.msgID = 2;
-								motes[k].helloMsg.msgType = 2;
+								motes[k].helloMsg.msgType = 1;
 								motes[k].helloMsg.srcID = k;
 								motes[k].helloMsg.finalDestID = motes[k].dstID;
 								motes[k].helloMsg.currSrcID = k;
@@ -651,14 +622,14 @@ int main(int argc, char *argv[]) {
 								motes[k].helloMsg.numHops = 1;
 								motes[k].helloMsg.nodesFound[0] = k;
 								motes[k].helloMsg.numCopies = motes[k].msgCopies;
-
+								
 								motes[k].outMsg = &motes[k].helloMsg;		
 							}
 							/* Send message in buffer */
 							if( bufferPtr != -1 ){
 								motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
 								motes[k].buffExpire[ bufferPtr ] = 0;
-
+								
 							}
 						}
 						else{
@@ -671,7 +642,7 @@ int main(int argc, char *argv[]) {
 							if( bufferPtr != -1 ){
 								motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
 								motes[k].buffExpire[ bufferPtr ] = 0;
-
+										
 							}
 						}
 					}	
@@ -769,14 +740,14 @@ int main(int argc, char *argv[]) {
 			for( i=0; i<simSize; i++ ){
 				for( j=0; j<simSize; j++ ){
 					
-					printf("%d ", testGrid[i][j][0]);	
+					//printf("%d ", testGrid[i][j][0]);	
 					
 				}
-				printf("\n\n");
+				//printf("\n\n");
 			
 			}
 			for( i=0; i<numNodes; i++ ){
-				printf( "Node: %d, x: %d, y: %d, z: %d\n", i, motes[i].x, motes[i].y, motes[i].z);
+			//	printf( "Node: %d, x: %d, y: %d, z: %d, Src?: %d, Dst: %d\n", i, motes[i].x, motes[i].y, motes[i].z, motes[i].srcFlag, motes[i].dstID);
 			}			
 
 			currTime++;
@@ -786,9 +757,40 @@ int main(int argc, char *argv[]) {
 	}
 	return 0;
 }
+				}
+				/* Review Any Recieved messages OR Send any Pending message */
+				/************* BEGIN ROUTING PROTOCOL *************/
+				motes[k].outMsg = 0;
+				
+				/* Block executes if node is source */
+				if( motes[k].srcFlag != -1 ){
+						
+		
+					/* Once startTime occurs, Source goes into Spray mode */
+					if( startTime == currTime ){
+						motes[k].status = 1;
+					}			
+					/* Recieved Message */	
+					if( motes[k].inMsg != 0 ){
+						/* Source node acts as ordinary node when status is 0, 
+						 * until has message ready, status = 1 */
+						if( motes[k].status == 1 ){
+							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
+							/* Recieved Simple 'I am here' message */
+							if( motes[k].inMsg->msgType == 0 ){
+								/* Heard node, clear timer to send hello sooner */
+								motes[k].sendPriority = 1;
+								
+							}
+							/* Recieved Delivery Msg */
+							else if( motes[k].inMsg->msgType == 1 ){
+
+								if( (motes[k].inMsg->msgID == 2) && (motes[k].inMsg->currSrcID == motes[k].dstID) ){
+						
+									done = 1;
 								}
 								else if( (motes[k].inMsg->msgID == 2) ){
-									printf("Src got dst's ack msg from relay, 266\n");
+									
 									done = 1;
 								}
 								else{
@@ -798,17 +800,18 @@ int main(int argc, char *argv[]) {
 							}
 							/* if motes[k].inMsg->msgType == 2, an ACK */
 							else{
-									if( motes[k].inMsg->currDestID == k ){
-										if( motes[k].inMsg->currSrcID == motes[k].dstID ){
-											printf("Messaging done, src got ack from dst, 280\n");
-											done = 1;
-										}
-										/* ACK was from relay that heard message */
-										else{
-											motes[k].msgCopies--;
-										}
-									}	
-								}
+								if( motes[k].inMsg->currDestID == k ){
+									if( motes[k].inMsg->currSrcID == motes[k].dstID ){
+	
+										done = 1;
+									}
+									/* ACK was from relay that heard message */
+									else{
+										motes[k].msgCopies--;
+										
+									}
+								}	
+								
 							}
 						}
 					}
@@ -834,33 +837,45 @@ int main(int argc, char *argv[]) {
 				}
 				/* Block of code for everyone else */
 				else{
+
 					bufferPtr = -1;
+					u = ACK_WAIT + 1;
+					
 					for( i=0,j=0; i<numNodes; i++ ){
-						
-						if( j < 1 && ( motes[k].buffExpire[ bufferPtr ] == 0 ) ){
+						if( j < 1 && ( motes[k].buffExpire[ i ] == 0 ) ){
 							j++;
 							bufferPtr = i;
 							i = numNodes;
-						}
-						if( (motes[k].msgBuff)[ i ].msgSendPriority == 0 ){
+						}				
+						if( (motes[k].buffExpire[ i ] > 0) 
+								&& (motes[k].buffExpire[ i ] < u) ){
+							
 							bufferPtr = i;
+							u = motes[k].buffExpire[ i ];
+							
 						}
-					}
-
+					}								
+					
 					/* I receieved Message */
 					if( motes[k].inMsg != 0 ){
 						/* Dst node recieves message addressed to it, sets status to 1 */
-						if( (motes[k].status == 0) && (motes[k].inMsg->finalDestID == k) ){
+						if( (motes[k].status == 0) && (motes[k].inMsg->finalDestID == k) 
+								&& (motes[k].inMsg->msgType == 1) ){
 							motes[k].dstID = motes[k].inMsg->srcID;
-							motes[k].status == 1;
-							printf("Got message at 399\n");
-							done = 1;
+							motes[k].status = 1;
+							if( motes[k].inMsg->currSrcID == motes[k].inMsg->srcID )
+								printf("*****Dst got message at 325 from Source \n");
+							else
+								printf("*****DST got message at 325 from Relay Node: \n%d", motes[k].inMsg->currSrcID );
+														
+							//done = 1;
 						}
 						/* Code block used by Dst node when acking SRC */
 						if( (motes[k].status == 1) ){
 							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
-							if( motes[k].inMsg->currSrcID == motes[k].dstID ){
-
+							/* Msg from Src, DST ACKS BACK */
+							if( motes[k].inMsg->currSrcID == motes[k].inMsg->srcID ){
+								
 								motes[k].msgBuff[ bufferPtr ].msgID = 2;
 								motes[k].msgBuff[ bufferPtr ].msgType = 2;
 								motes[k].msgBuff[ bufferPtr ].srcID = k;
@@ -870,60 +885,56 @@ int main(int argc, char *argv[]) {
 								motes[k].msgBuff[ bufferPtr ].numHops = 1;
 								motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
 								motes[k].msgBuff[ bufferPtr ].nodesFound[1] = motes[k].dstID;
-								buffExpire[ bufferPtr ] = ACK_WAIT;
+								motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;
 							}
 							/* Got Hello from Relay */
-							else if( motes[k].inMsg->msgType == 0 ){
+							else if( (motes[k].inMsg->msgType == 0) || (motes[k].inMsg->msgType == 1) ){
+							
 								motes[k].sendPriority = 1;	
 							}
-							/* Relay delivering message to me */
-							else if( (motes[k].inMsg->msgID == 1) && (motes[k].inMsg->finalDestID == k) ){
-								motes[k].msgBuff[ bufferPtr ].msgID = 1;
-								motes[k].msgBuff[ bufferPtr ].msgType = 2;
-								motes[k].msgBuff[ bufferPtr ].srcID = motes[k].dstID;
-								motes[k].msgBuff[ bufferPtr ].finalDestID = k;
-								motes[k].msgBuff[ bufferPtr ].currSrcID = k;
-								motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].inMsg->currSrcID;
-								motes[k].msgBuff[ bufferPtr ].numHops = 0;
-								motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
-								buffExpire[ bufferPtr ] = ACK_WAIT;					
-							}
+					
+							
 							/* ACK from relay or Src */
 							else if( (motes[k].inMsg->msgType == 2) && (motes[k].inMsg->currDestID == k) 
 									&& (motes[k].inMsg->msgID == 2) ){
-								if( motes[k].inMsg->currDestID == k ){
-									/* Src got ACK from Dst, know DST got its original message */
-									if( motes[k].inMsg->currSrcID == motes[k].dstID ){
-										printf("Test done, dst got ack from source, 280\n");
-										done = 1;
-									}
-									/* ACK was from relay that heard message */
-									else{
-										motes[k].msgCopies--;
-									}
-								}									
+
+								/* Src got ACK from Dst, know DST got its original message */
+								if( motes[k].inMsg->currSrcID == motes[k].dstID ){
+									printf("Src: %d, Dst: %d, 373\n", motes[k].dstID, motes[k].inMsg->currSrcID);
+									printf("*****TEST DONE******, dst got ack from source, 374\n");
+									done = 1;
+								}
+								/* ACK was from relay that heard message */
+								else{
+									motes[k].msgCopies--;
+									
+								}
+																
 							}
 							else{
 								/* Message had ID of 2 from relay, ignore, 
 								 * it's a copy of what I already sent out */
+								 
 							}
 							
 						}
 						else{
 							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
+							/* I'm Here Message Recieved */
 							if( motes[k].inMsg->msgType == 0 ){
 								/* If hello sent from destination node, say hello back sooner */
-								if( (motes[k].helloMsg.finalDestID == motes[k].inMsg->currSrcID  ){
+								if( motes[k].helloMsg.finalDestID == motes[k].inMsg->currSrcID  ){
 									motes[k].sendPriority = 1;	
+								
 								}
 							}
-							/* If message is a relay message from eithe source or relay */
+							/* If message is a relay message from either source or relay */
 							else if( motes[k].inMsg->msgType == 1 ){
 								/* Relay message from a source and not a relay */
 								if( motes[k].inMsg->srcID == motes[k].inMsg->currSrcID ){
-									/* Add new Hello Message*/
-									if( motes[k].helloMsg.msgID < motes[k].inMsg->msgID 
-											&& motes[k].inMsg->numCopies > 0 ){
+									/* Change I'm Here Message to Relay message*/
+									if( (motes[k].helloMsg.msgID < motes[k].inMsg->msgID) 
+											&& (motes[k].inMsg->numCopies > 0) ){
 										motes[k].helloMsg.msgID = motes[k].inMsg->msgID;
 										motes[k].helloMsg.msgType = 1;
 										motes[k].helloMsg.srcID = motes[k].inMsg->srcID;
@@ -933,7 +944,7 @@ int main(int argc, char *argv[]) {
 										motes[k].helloMsg.numCopies = -1;
 										motes[k].helloMsg.numHops = motes[k].inMsg->numHops + 1;;		
 										motes[k].helloMsg.nodesFound[1] = k;		
-
+										
 										motes[k].msgBuff[ bufferPtr ].msgID = motes[k].inMsg->msgID;
 										motes[k].msgBuff[ bufferPtr ].msgType = 2;
 										motes[k].msgBuff[ bufferPtr ].srcID = motes[k].inMsg->srcID;
@@ -942,8 +953,8 @@ int main(int argc, char *argv[]) {
 										motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].inMsg->srcID;
 										motes[k].msgBuff[ bufferPtr ].numHops = 0;
 										motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
-
-										motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
+										motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;
+									
 									}
 								}
 								/* I don't have current relay message, add new message to deliver */
@@ -954,7 +965,7 @@ int main(int argc, char *argv[]) {
 							/* Got ACK from destination node, got back to saying I'm Here Hello */
 							else{
 								
-								if( motes[k].inMsg->currDestID == motes[k].helloMsg.finalDestID ){
+								if( motes[k].inMsg->currSrcID == motes[k].helloMsg.finalDestID ){
 									motes[k].helloMsg.msgID = 0;
 									motes[k].helloMsg.msgType = 0;
 									motes[k].helloMsg.srcID = -1;
@@ -974,12 +985,14 @@ int main(int argc, char *argv[]) {
 						/* See if there's a message to send in buffer */
 						bufferPtr = -1;
 						u = ACK_WAIT + 1;
-						for( i=0,j=0; i<numNodes; i++ ){
+						
+						for( i=0; i<numNodes; i++ ){
 							
-							if( (motes[k].buffExpire[ bufferPtr ] > 0) 
-									&& motes[k].buffExpire[ bufferPtr ] < u ){
+							if( (motes[k].buffExpire[ i ] > 0) 
+									&& (motes[k].buffExpire[ i ] < u) ){
 								bufferPtr = i;
 								
+
 							}
 						}						
 						if( motes[k].status == 1 ){
@@ -987,22 +1000,22 @@ int main(int argc, char *argv[]) {
 							/* If no message to send in buffer, send Hello */
 							if( (motes[k].helloTimer == 0) && (bufferPtr == -1) ){
 								motes[k].helloMsg.msgID = 2;
-								motes[k].helloMsg.msgType = 2;
+								motes[k].helloMsg.msgType = 1;
 								motes[k].helloMsg.srcID = k;
 								motes[k].helloMsg.finalDestID = motes[k].dstID;
 								motes[k].helloMsg.currSrcID = k;
 								motes[k].helloMsg.currDestID = -1;
 								motes[k].helloMsg.numHops = 1;
 								motes[k].helloMsg.nodesFound[0] = k;
-								motes[k].helloMsg.numCopies = motes[k].numCopies;
-
+								motes[k].helloMsg.numCopies = motes[k].msgCopies;
+								
 								motes[k].outMsg = &motes[k].helloMsg;		
 							}
 							/* Send message in buffer */
 							if( bufferPtr != -1 ){
 								motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
 								motes[k].buffExpire[ bufferPtr ] = 0;
-
+								
 							}
 						}
 						else{
@@ -1015,7 +1028,7 @@ int main(int argc, char *argv[]) {
 							if( bufferPtr != -1 ){
 								motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
 								motes[k].buffExpire[ bufferPtr ] = 0;
-
+										
 							}
 						}
 					}	
@@ -1036,10 +1049,6 @@ int main(int argc, char *argv[]) {
 					
 				
 				for( i=0; i<numNodes; i++ ){
-					
-					if( motes[k].nodesSeen[ i ] < SEEN_TIME_MAX ){
-						motes[k].nodesSeen[ i ]++;
-					}
 						
 					if( motes[k].buffExpire[ i ] > 0 ){
 						motes[k].buffExpire[ i ]--;
@@ -1124,7 +1133,7 @@ int main(int argc, char *argv[]) {
 			
 			}
 			for( i=0; i<numNodes; i++ ){
-				printf( "Node: %d, x: %d, y: %d, z: %d\n", i, motes[i].x, motes[i].y, motes[i].z);
+				printf( "Node: %d, x: %d, y: %d, z: %d, Src?: %d, Dst: %d\n", i, motes[i].x, motes[i].y, motes[i].z, motes[i].srcFlag, motes[i].dstID);
 			}			
 
 			currTime++;
