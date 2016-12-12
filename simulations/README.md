@@ -1,0 +1,20 @@
+Simulation
+
+In Progress:
+Spray and Wait.
+Arguements:
+
+1. Range - How far can nodes hear and send?  Accepts 1 or more
+2. Number of Trials - 1 or greater
+3. Copies - Number of copies for source to spray, nore more than number of nodes minus source
+4. Number of nodes - 1 or more
+5. Length of Testing Grid - 2 or more (Won't accept nodes greater than what the area of the grid)
+
+Nodes successfully move randomly
+Carrier Sense:
+
+1. Node hears no transmissions, it will send message
+2. Node stores msg in buffer if medium in use
+3. Node doesn't hear messages if more than one neighbor transmitting at same time
+Routing in progress: Mechanisms are messy, did not think routing design thoroghly enough before building.\n Still troubleshooting to get nodes to talk.
+           
