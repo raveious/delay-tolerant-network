@@ -14,7 +14,7 @@
 
 #define SIZE_MAX 50
 #define HELLO_WAIT 3
-#define START_TIME 30
+#define START_TIME 2
 #define ACK_WAIT 10
 #define SEEN_TIME_MAX 50
 
@@ -68,428 +68,6 @@ struct node {
 	
 };
 
-/*
- *  Spray and Wait Routing Protocol
- *
- *  struct *node mote - Current Mote running code
- *  int numNodes - Number of Nodes in Network
- *  int id - ID of current node
- *  int startTimer - Source starts spraying once timer times out
- *				(startTimer used to make sure system in steadystate before test)
- *  int currTime - current run time of test
- *
- *  Returns flag if current simulation is done, 
- *  i.e. Source Heard back from Destination Node
- */
-int routingProtocol( struct node* mote, int numNodes, int id, int startTimer, int currTime ){
-	
-	struct node * currNode = mote + id;
-	struct message * rxMsg = currNode->inMsg;
-	int i, j;
-	int bufferPtr = 0;
-	currNode->inMsg = 0;
-	currNode->outMsg = 0;
-	
-	if( currNode->srcFlag != -1 ){
-			
-
-		for( i=0; i<numNodes; i++ ){
-			if( currNode->msgToSend[i] == 0 ){
-				bufferPtr = i;
-				i = numNodes;
-			}
-		}
-		if( currNode->msgToSend[bufferPtr] != 0 ){
-			for( i=0;i<numNodes; i++ ){
-				if( currNode->msgToSend[i] != 2 ){
-					bufferPtr = i;
-					i = numNodes;
-				}
-			}
-		}				
-			
-		if( startTimer == currTime ){
-			currNode->status = 1;
-		}			
-			
-		if( rxMsg != 0 ){
-			if( currNode->status == 0 ){
-				currNode->nodesSeen[ rxMsg->currSrcID ] = 0;
-				currNode->msgBuff[ bufferPtr ].msgID = 0;
-				currNode->msgBuff[ bufferPtr ].msgType = 0;
-				currNode->msgBuff[ bufferPtr ].srcID = -1;
-				currNode->msgBuff[ bufferPtr ].finalDestID = -1;
-				currNode->msgBuff[ bufferPtr ].currSrcID = id;
-				currNode->msgBuff[ bufferPtr ].currDestID = rxMsg->currSrcID;
-				currNode->msgBuff[ bufferPtr ].numHops = 1;
-				currNode->msgToSend[ bufferPtr ] = 0;
-
-			}
-			else {
-				/* Recieved Simple 'I am here' message */
-				if( rxMsg->msgType == 0 ){
-					currNode->nodesSeen[ rxMsg->currSrcID ] = 0;
-					if( rxMsg->currSrcID == currNode->dstID ){
-						currNode->msgBuff[ bufferPtr ].msgID = 1;
-						currNode->msgBuff[ bufferPtr ].msgType = 1;
-						currNode->msgBuff[ bufferPtr ].srcID = id;
-						currNode->msgBuff[ bufferPtr ].finalDestID = currNode->dstID;
-						currNode->msgBuff[ bufferPtr ].currSrcID = id;
-						currNode->msgBuff[ bufferPtr ].currDestID = currNode->dstID;
-						currNode->msgBuff[ bufferPtr ].numHops = 1;
-						currNode->msgBuff[ bufferPtr ].nodesFound[0] = id;
-						currNode->msgBuff[ bufferPtr ].nodesFound[1] = currNode->dstID;
-						currNode->msgToSend[ bufferPtr ] = 2;
-					}
-					else{
-						if( currNode->msgCopies != 0 ){			
-							currNode->msgBuff[ bufferPtr ].msgID = 1;
-							currNode->msgBuff[ bufferPtr ].msgType = 1;
-							currNode->msgBuff[ bufferPtr ].srcID = id;
-							currNode->msgBuff[ bufferPtr ].finalDestID = currNode->dstID;
-							currNode->msgBuff[ bufferPtr ].currSrcID = id;
-							currNode->msgBuff[ bufferPtr ].currDestID = rxMsg->currSrcID;
-							currNode->msgBuff[ bufferPtr ].numHops = 1;
-							currNode->msgBuff[ bufferPtr ].nodesFound[0] = id;
-							currNode->msgToSend[ bufferPtr ] = 1;
-							
-						}
-					}
-				}
-				/* Recieved Hello Delivery */
-				else if( rxMsg->msgType == 1 ){
-					currNode->nodesSeen[ rxMsg->currSrcID ] = 0;
-					if( (rxMsg->msgID == 2) && (rxMsg->currSrcID == currNode->dstID) ){
-						printf("Src got dst's ack from dst\n");
-						return 1;
-					}
-					else if( (rxMsg->msgID == 2) ){
-						printf("Src got dst's ack msg from relay\n");
-						return 1;
-					}
-					else{
-						/* Message was same as was sent from source, ignore */
-					}
-				
-				}
-				/* if rxMsg->msgType == 2 */
-				else {
-					for( i=0; i<numNodes; i++){
-						if( (currNode->msgToSend)[ i ] > 0 ){
-							if( (currNode->msgBuff)[ i ].currDestID == rxMsg->currSrcID ){
-								if( rxMsg->currSrcID == currNode->dstID ){
-									printf("Messaging done, src got ack from dst\n");
-									return 1;
-								}
-								else{
-									currNode->msgCopies--;
-									(currNode->msgToSend)[ i ] = 0;
-									i = numNodes;
-									currNode->buffExpire[ i ] = 0;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		else{
-			
-			bufferPtr = 0;
-			
-			for( i=0,j=0; i<numNodes; i++ ){
-				
-				if( j < 1 && ((currNode->msgToSend)[ i ] == 1) 
-						&& ( currNode->buffExpire[ bufferPtr ] == 0 ) ){
-					j++;
-					bufferPtr = i;
-				}
-				if( (currNode->msgToSend)[ i ] == 2 ){
-					bufferPtr = i;
-					i = numNodes;
-				}
-			}
-			if( (currNode->helloTimer == 0) && (bufferPtr == 0) ){
-				
-				currNode->helloMsg.msgID = 0;
-				currNode->helloMsg.msgType = 0;
-				currNode->helloMsg.srcID = -1;
-				currNode->helloMsg.finalDestID = -1;
-				currNode->helloMsg.currSrcID = id;
-				currNode->helloMsg.currDestID = -1;
-				currNode->helloMsg.numHops = -1;	
-
-				currNode->outMsg = &currNode->helloMsg;
-				
-			}
-			if( bufferPtr != 0 ){
-				currNode->outMsg = &currNode->msgBuff[ bufferPtr ];
-				currNode->buffExpire[ bufferPtr ] = ACK_WAIT;
-		
-			}
-		}	
-	}
-	else{
-		
-		for( i=0; i<numNodes; i++ ){
-			if( currNode->msgToSend[i] == 0 ){
-				bufferPtr = i;
-				i = numNodes;
-			}
-		}
-		if( currNode->msgToSend[bufferPtr] != 0 ){
-			for( i=0;i<numNodes; i++ ){
-				if( currNode->msgToSend[i] != 2 ){
-					bufferPtr = i;
-					i = numNodes;
-				}
-			}
-		}		
-		/*  */
-		if( rxMsg != 0 ){
-			/* Dst node recieves message addressed to it, sets status to 1 */
-			if( (currNode->status == 0) && (rxMsg->finalDestID == id) ){
-				currNode->dstID = rxMsg->srcID;
-				currNode->status == 1;
-				return 1;
-			}
-			/* Block used by Dst node when acking SRC */
-			if( (currNode->status == 1) ){
-				currNode->nodesSeen[ rxMsg->currSrcID ] = 0;
-				if( rxMsg->currSrcID == currNode->dstID ){
-					currNode->msgBuff[ bufferPtr ].msgID = 2;
-					currNode->msgBuff[ bufferPtr ].msgType = 2;
-					currNode->msgBuff[ bufferPtr ].srcID = id;
-					currNode->msgBuff[ bufferPtr ].finalDestID = currNode->dstID;
-					currNode->msgBuff[ bufferPtr ].currSrcID = id;
-					currNode->msgBuff[ bufferPtr ].currDestID = currNode->dstID;
-					currNode->msgBuff[ bufferPtr ].numHops = 1;
-					currNode->msgBuff[ bufferPtr ].nodesFound[0] = id;
-					currNode->msgBuff[ bufferPtr ].nodesFound[1] = currNode->dstID;
-					currNode->msgToSend[ bufferPtr ] = 2;
-				}
-				/* Got Hello from Relay */
-				else if( rxMsg->msgType == 0 ){
-					if( currNode->msgCopies != 0 ){			
-						currNode->msgBuff[ bufferPtr ].msgID = 2;
-						currNode->msgBuff[ bufferPtr ].msgType = 1;
-						currNode->msgBuff[ bufferPtr ].srcID = id;
-						currNode->msgBuff[ bufferPtr ].finalDestID = currNode->dstID;
-						currNode->msgBuff[ bufferPtr ].currSrcID = id;
-						currNode->msgBuff[ bufferPtr ].currDestID = rxMsg->currSrcID;
-						currNode->msgBuff[ bufferPtr ].numHops = 1;
-						currNode->msgBuff[ bufferPtr ].nodesFound[0] = id;
-						currNode->msgToSend[ bufferPtr ] = 1;
-						
-					}					
-				}
-				/* Relay delivering message for me */
-				else if( (rxMsg->msgID == 1) && (rxMsg->finalDestID == id) ){
-					currNode->msgBuff[ bufferPtr ].msgID = 1;
-					currNode->msgBuff[ bufferPtr ].msgType = 2;
-					currNode->msgBuff[ bufferPtr ].srcID = currNode->dstID;
-					currNode->msgBuff[ bufferPtr ].finalDestID = id;
-					currNode->msgBuff[ bufferPtr ].currSrcID = id;
-					currNode->msgBuff[ bufferPtr ].currDestID = rxMsg->currSrcID;
-					currNode->msgBuff[ bufferPtr ].numHops = 0;
-					currNode->msgBuff[ bufferPtr ].nodesFound[0] = id;
-					currNode->msgToSend[ bufferPtr ] = 1;					
-				}
-				/* ACK from relay, it will pass message on */
-				else if( (rxMsg->msgType == 2) && (rxMsg->currDestID == id) && (rxMsg->msgID == 2) ){
-					for( i=0; i<numNodes; i++){
-						if( (currNode->msgToSend)[ i ] > 0 ){
-							if( (currNode->msgBuff)[ i ].currDestID == rxMsg->currSrcID ){
-								if( rxMsg->currSrcID == currNode->dstID ){
-									return 1;
-								}
-								else{
-									currNode->msgCopies--;
-									(currNode->msgToSend)[ i ] = 0;
-									i = numNodes;
-									currNode->buffExpire[ i ] = 0;
-								}
-							}
-						}
-					}
-				}
-				else{
-					/* Message had ID of 2 from relay, ignore, 
-					 * it's a copy of what I already sent out */
-				}
-				
-			}
-			else{
-				currNode->nodesSeen[ rxMsg->currSrcID ] = 0;
-				if( rxMsg->msgType == 0 ){
-					/* If hello sent from destination node, say hello back sooner */
-					if( (currNode->msgToSend)[ 0 ] == 2 ){
-						if( (currNode->msgBuff)[ 0 ].finalDestID == rxMsg->currSrcID  ){
-							currNode->sendPriority = 1;	
-						}
-					}
-
-				}
-				/* If message is a relay message */
-				else if( rxMsg->msgType == 1 ){
-					/* Relay message from a source and not a relay */
-					if( (currNode->msgToSend)[ 0 ] == 2 && (rxMsg->srcID == rxMsg->currSrcID) ){
-						/* If destination node is ACKING back to source, replace relay message with new */
-						if( currNode->msgBuff[ 0 ].msgID < rxMsg->msgID  ){
-							currNode->msgBuff[ 0 ].msgID = rxMsg->msgID;
-							currNode->msgBuff[ 0 ].msgType = 1;
-							currNode->msgBuff[ 0 ].srcID = rxMsg->srcID;
-							currNode->msgBuff[ 0 ].finalDestID = rxMsg->finalDestID;
-							currNode->msgBuff[ 0 ].currSrcID = id;
-							currNode->msgBuff[ 0 ].currDestID = rxMsg->finalDestID;
-							currNode->msgBuff[ 0 ].numHops = rxMsg->numHops + 1;
-							currNode->msgBuff[ 0 ].nodesFound[0] = id;
-							currNode->msgToSend[ 0 ] = 2;							
-						}
-					}
-					/* I don't have current relay message, add new message to deliver */
-					else if( rxMsg->srcID == rxMsg->currSrcID ){
-							/* Build hello relay message */
-							currNode->msgBuff[ 0 ].msgID = rxMsg->msgID;
-							currNode->msgBuff[ 0 ].msgType = 1;
-							currNode->msgBuff[ 0 ].srcID = rxMsg->srcID;
-							currNode->msgBuff[ 0 ].finalDestID = rxMsg->finalDestID;
-							currNode->msgBuff[ 0 ].currSrcID = id;
-							currNode->msgBuff[ 0 ].currDestID = rxMsg->finalDestID;
-							currNode->msgBuff[ 0 ].numHops = rxMsg->numHops + 1;
-							currNode->msgBuff[ 0 ].nodesFound[1] = id;
-							currNode->msgToSend[ 0 ] = 2;		
-							/*  Built ACK to let source know I got message */
-							currNode->msgBuff[ 1 ].msgID = rxMsg->msgID;
-							currNode->msgBuff[ 1 ].msgType = 2;
-							currNode->msgBuff[ 1 ].srcID = rxMsg->srcID;
-							currNode->msgBuff[ 1 ].finalDestID = rxMsg->finalDestID;
-							currNode->msgBuff[ 1 ].currSrcID = id;
-							currNode->msgBuff[ 1 ].currDestID = rxMsg->srcID;
-							currNode->msgBuff[ 1 ].numHops = 1;
-							currNode->msgBuff[ 1 ].nodesFound[0] = id;
-							currNode->msgToSend[ 1 ] = 2;	
-					}
-					else{
-						/* Message recieved was from another relay node, ignore */
-					}	
-				}
-				/* Got ACK from destination node, remove relay message from buffer */
-				else{
-					if( rxMsg->currDestID == currNode->dstID ){
-						(currNode->msgToSend)[ i ] = 0;
-					}
-					
-				}
-			}
-			
-			
-		}
-		else{
-			if( currNode->status == 1 ){
-				bufferPtr = 0;
-				
-				for( i=0,j=0; i<numNodes; i++ ){
-					
-					if( j < 1 && ((currNode->msgToSend)[ i ] == 1) 
-							&& ( currNode->buffExpire[ bufferPtr ] == 0 ) ){
-						j++;
-						bufferPtr = i;
-					}
-					if( (currNode->msgToSend)[ i ] == 2 ){
-						bufferPtr = i;
-						i = numNodes;
-					}
-				}
-				if( (currNode->helloTimer == 0) && (bufferPtr == 0) ){
-					currNode->helloMsg.msgID = 0;
-					currNode->helloMsg.msgType = 0;
-					currNode->helloMsg.srcID = -1;
-					currNode->helloMsg.finalDestID = -1;
-					currNode->helloMsg.currSrcID = id;
-					currNode->helloMsg.currDestID = -1;
-					currNode->helloMsg.numHops = -1;	
-
-					currNode->outMsg = &currNode->helloMsg;		
-				}
-				if( bufferPtr != 0 ){
-					currNode->outMsg = &currNode->msgBuff[ bufferPtr ];
-					currNode->buffExpire[ bufferPtr ] = ACK_WAIT;
-
-				}
-			}
-			else{
-				if( (currNode->helloTimer == 0) && (((currNode->msgToSend)[ 0 ] == 0) 
-						|| ((currNode->msgToSend)[ 1 ] == 0)) ){
-					currNode->helloMsg.msgID = 0;
-					currNode->helloMsg.msgType = 0;
-					currNode->helloMsg.srcID = -1;
-					currNode->helloMsg.finalDestID = -1;
-					currNode->helloMsg.currSrcID = id;
-					currNode->helloMsg.currDestID = -1;
-					currNode->helloMsg.numHops = -1;	
-
-					currNode->outMsg = &currNode->helloMsg;		
-
-				}
-				else if( (currNode->msgToSend)[ 1 ] != 0 ){
-					(currNode->outMsg)->msgID = currNode->msgBuff[ 1 ].msgID;
-					(currNode->outMsg)->msgType = (currNode->msgBuff)[ 1 ].msgType;
-					(currNode->outMsg)->srcID = (currNode->msgBuff)[ 1 ].srcID;
-					(currNode->outMsg)->finalDestID = (currNode->msgBuff)[ 1 ].finalDestID;
-					(currNode->outMsg)->currSrcID = (currNode->msgBuff)[ 1 ].currSrcID;
-					(currNode->outMsg)->currDestID = (currNode->msgBuff)[ 1 ].currDestID;
-					(currNode->outMsg)->numHops = (currNode->msgBuff)[ 1 ].numHops;			
-					currNode->sendPriority = 1;				
-				}
-				else{
-					if( (currNode->msgToSend)[ 0 ] != 0 ){
-						(currNode->outMsg)->msgID = (currNode->msgBuff)[ 0 ].msgID;
-						(currNode->outMsg)->msgType = (currNode->msgBuff)[ 0 ].msgType;
-						(currNode->outMsg)->srcID = (currNode->msgBuff)[ 0 ].srcID;
-						(currNode->outMsg)->finalDestID = (currNode->msgBuff)[ 0 ].finalDestID;
-						(currNode->outMsg)->currSrcID = (currNode->msgBuff)[ 0 ].currSrcID;
-						(currNode->outMsg)->currDestID = (currNode->msgBuff)[ 0 ].currDestID;
-						(currNode->outMsg)->numHops = (currNode->msgBuff)[ 0 ].numHops;
-						i=0;
-						while( ((currNode->msgBuff)[ 0 ].nodesFound[i] != -1) && i<numNodes ){
-							((currNode->outMsg)->nodesFound)[i] = (currNode->msgBuff)[ 0 ].nodesFound[i];
-						}
-					
-					}
-
-				}
-			}
-		}	
-	}	
-	/* Decrement timer for sending out next hello */
-	if( currNode->sendPriority == 1 ){
-		currNode->helloTimer = 0;
-		currNode->sendPriority = 0;
-	}
-	else{
-		if( currNode->helloTimer == 0 ){
-			currNode->helloTimer = HELLO_WAIT;
-		}
-		else{
-			currNode->helloTimer--;
-		}		
-	}
-		
-	
-	for( i=0; i<numNodes; i++ ){
-		
-		if( currNode->nodesSeen[ i ] < SEEN_TIME_MAX ){
-			currNode->nodesSeen[ i ]++;
-		}
-			
-		if( currNode->buffExpire[ i ] > 0 ){
-			currNode->buffExpire[ i ]--;
-		}	
-	}
-	return 0;
-}
-
 
 /*
  * Arguments: "Range", "Number of Runs", "Number of Copies", "Number of Nodes", "Grid Width"
@@ -516,7 +94,8 @@ int main(int argc, char *argv[]) {
 	int srcID;
 	int dstID;	
 	int currTime;
-	
+	int bufferPtr = 0;
+
 	int testGrid[SIZE_MAX][SIZE_MAX][SIZE_MAX] = {-1};
 	int avgNumHops;
 	struct node motes[SIZE_MAX];
@@ -584,6 +163,7 @@ int main(int argc, char *argv[]) {
 			motes[k].helloTimer = random() % HELLO_WAIT;			
 			motes[k].srcFlag = -1;	
 			motes[k].dstID = -1;	
+			motes[k].id = k;
 			motes[k].status = 0;
 			motes[k].sendPriority = 0;
 			motes[k].msgCopies = srcCopies;		
@@ -638,9 +218,411 @@ int main(int argc, char *argv[]) {
 				}
 				/* Review Any Recieved messages OR Send any Pending message */
 				/************* BEGIN ROUTING PROTOCOL *************/
+				motes[k].outMsg = 0;
 				
-				done = routingProtocol( &motes[k], numNodes, k, startTime, currTime );
-		
+				if( motes[k].srcFlag != -1 ){
+						
+					/* Find free space in buffer for storing messages */
+					for( i=0; i<numNodes; i++ ){
+						if(  motes[k].msgToSend[i] == 0 ){
+							bufferPtr = i;
+							i = numNodes;
+						}
+					}
+					/* If no free space, replace low priority message */
+					if(  motes[k].msgToSend[bufferPtr] != 0 ){
+						for( i=0;i<numNodes; i++ ){
+							if(  motes[k].msgToSend[i] != 2 ){
+								bufferPtr = i;
+								i = numNodes;
+							}
+						}
+					}			
+						
+					if( startTime == currTime ){
+						motes[k].status = 1;
+					}			
+					/* Recieved Message */	
+					if( motes[k].inMsg != 0 ){
+						/* Source node acks as ordinary node when status is 0, 
+						 * until has message ready, status = 1 */
+						if( motes[k].status == 1 ){
+							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
+							/* Recieved Simple 'I am here' message */
+							if( motes[k].inMsg->msgType == 0 ){
+								
+								if( motes[k].inMsg->currSrcID == motes[k].dstID ){
+									motes[k].msgBuff[ bufferPtr ].msgID = 1;
+									motes[k].msgBuff[ bufferPtr ].msgType = 1;
+									motes[k].msgBuff[ bufferPtr ].srcID = k;
+									motes[k].msgBuff[ bufferPtr ].finalDestID = motes[k].dstID;
+									motes[k].msgBuff[ bufferPtr ].currSrcID = k;
+									motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].dstID;
+									motes[k].msgBuff[ bufferPtr ].numHops = 1;
+									motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
+									motes[k].msgBuff[ bufferPtr ].nodesFound[1] = motes[k].dstID;
+									motes[k].msgToSend[ bufferPtr ] = 2;
+								}
+								else{
+									if( motes[k].msgCopies != 0 ){			
+										motes[k].msgBuff[ bufferPtr ].msgID = 1;
+										motes[k].msgBuff[ bufferPtr ].msgType = 1;
+										motes[k].msgBuff[ bufferPtr ].srcID = k;
+										motes[k].msgBuff[ bufferPtr ].finalDestID = motes[k].dstID;
+										motes[k].msgBuff[ bufferPtr ].currSrcID = k;
+										motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].inMsg->currSrcID;
+										motes[k].msgBuff[ bufferPtr ].numHops = 1;
+										motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
+										motes[k].msgToSend[ bufferPtr ] = 1;
+										
+									}
+								}
+							}
+							/* Recieved Hello Delivery */
+							else if( motes[k].inMsg->msgType == 1 ){
+
+								if( (motes[k].inMsg->msgID == 2) && (motes[k].inMsg->currSrcID == motes[k].dstID) ){
+									printf("Src got dst's ack from dst\n");
+									done = 1;
+								}
+								else if( (motes[k].inMsg->msgID == 2) ){
+									printf("Src got dst's ack msg from relay\n");
+									done = 1;
+								}
+								else{
+									/* Message was same as was sent from source, ignore */
+								}
+							
+							}
+							/* if motes[k].inMsg->msgType == 2 */
+							else {
+								for( i=0; i<numNodes; i++){
+									if( (motes[k].msgToSend)[ i ] > 0 ){
+										if( (motes[k].msgBuff)[ i ].currDestID == motes[k].inMsg->currSrcID ){
+											if( motes[k].inMsg->currSrcID == motes[k].dstID ){
+												printf("Messaging done, src got ack from dst\n");
+												done = 1;
+											}
+											else{
+												motes[k].msgCopies--;
+												(motes[k].msgToSend)[ i ] = 0;
+												i = numNodes;
+												motes[k].buffExpire[ i ] = 0;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					else{
+						
+						bufferPtr = -1;
+						
+						for( i=0,j=0; i<numNodes; i++ ){
+							
+							if( j < 1 && ((motes[k].msgToSend)[ i ] == 1) 
+									&& ( motes[k].buffExpire[ i ] >= 0 ) ){
+								j++;
+								bufferPtr = i;
+							}
+							if( (motes[k].msgToSend)[ i ] == 2 ){
+								bufferPtr = i;
+								i = numNodes;
+							}
+						}
+						if( (motes[k].helloTimer == 0) && (bufferPtr == -1) ){
+							
+							if( motes[k].status == 0 ){
+								motes[k].helloMsg.msgID = 0;
+								motes[k].helloMsg.msgType = 0;
+								motes[k].helloMsg.srcID = -1;
+								motes[k].helloMsg.finalDestID = -1;
+								motes[k].helloMsg.currSrcID = k;
+								motes[k].helloMsg.currDestID = -1;
+								motes[k].helloMsg.numHops = -1;	
+							}
+							else{
+								motes[k].helloMsg.msgID = 1;
+								motes[k].helloMsg.msgType = 1;
+								motes[k].helloMsg.srcID = k;
+								motes[k].helloMsg.finalDestID = motes[k].dstID;
+								motes[k].helloMsg.currSrcID = k;
+								motes[k].helloMsg.currDestID = -1;
+								motes[k].helloMsg.numHops = 0;	
+							}
+							motes[k].outMsg = &motes[k].helloMsg;
+							
+						}
+						if( bufferPtr > -1 ){
+							motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
+							motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;
+					
+						}
+					}	
+				}
+				else{
+					
+					for( i=0; i<numNodes; i++ ){
+						if( motes[k].msgToSend[i] == 0 ){
+							bufferPtr = i;
+							i = numNodes;
+						}
+					}
+					if( motes[k].msgToSend[bufferPtr] != 0 ){
+						for( i=0;i<numNodes; i++ ){
+							if( motes[k].msgToSend[i] != 2 ){
+								bufferPtr = i;
+								i = numNodes;
+							}
+						}
+					}		
+					/*  */
+					if( motes[k].inMsg != 0 ){
+						/* Dst node recieves message addressed to it, sets status to 1 */
+						if( (motes[k].status == 0) && (motes[k].inMsg->finalDestID == k) ){
+							motes[k].dstID = motes[k].inMsg->srcID;
+							motes[k].status == 1;
+							printf("Got message at 399\n");
+							done = 1;
+						}
+						/* Block used by Dst node when acking SRC */
+						if( (motes[k].status == 1) ){
+							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
+							if( motes[k].inMsg->currSrcID == motes[k].dstID ){
+								motes[k].msgBuff[ bufferPtr ].msgID = 2;
+								motes[k].msgBuff[ bufferPtr ].msgType = 2;
+								motes[k].msgBuff[ bufferPtr ].srcID = k;
+								motes[k].msgBuff[ bufferPtr ].finalDestID = motes[k].dstID;
+								motes[k].msgBuff[ bufferPtr ].currSrcID = k;
+								motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].dstID;
+								motes[k].msgBuff[ bufferPtr ].numHops = 1;
+								motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
+								motes[k].msgBuff[ bufferPtr ].nodesFound[1] = motes[k].dstID;
+								motes[k].msgToSend[ bufferPtr ] = 2;
+							}
+							/* Got Hello from Relay */
+							else if( motes[k].inMsg->msgType == 0 ){
+								if( motes[k].msgCopies != 0 ){			
+									motes[k].msgBuff[ bufferPtr ].msgID = 2;
+									motes[k].msgBuff[ bufferPtr ].msgType = 1;
+									motes[k].msgBuff[ bufferPtr ].srcID = k;
+									motes[k].msgBuff[ bufferPtr ].finalDestID = motes[k].dstID;
+									motes[k].msgBuff[ bufferPtr ].currSrcID = k;
+									motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].inMsg->currSrcID;
+									motes[k].msgBuff[ bufferPtr ].numHops = 1;
+									motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
+									motes[k].msgToSend[ bufferPtr ] = 1;
+									
+								}					
+							}
+							/* Relay delivering message for me */
+							else if( (motes[k].inMsg->msgID == 1) && (motes[k].inMsg->finalDestID == k) ){
+								motes[k].msgBuff[ bufferPtr ].msgID = 1;
+								motes[k].msgBuff[ bufferPtr ].msgType = 2;
+								motes[k].msgBuff[ bufferPtr ].srcID = motes[k].dstID;
+								motes[k].msgBuff[ bufferPtr ].finalDestID = k;
+								motes[k].msgBuff[ bufferPtr ].currSrcID = k;
+								motes[k].msgBuff[ bufferPtr ].currDestID = motes[k].inMsg->currSrcID;
+								motes[k].msgBuff[ bufferPtr ].numHops = 0;
+								motes[k].msgBuff[ bufferPtr ].nodesFound[0] = k;
+								motes[k].msgToSend[ bufferPtr ] = 1;					
+							}
+							/* ACK from relay, it will pass message on */
+							else if( (motes[k].inMsg->msgType == 2) && (motes[k].inMsg->currDestID == k) && (motes[k].inMsg->msgID == 2) ){
+								for( i=0; i<numNodes; i++){
+									if( (motes[k].msgToSend)[ i ] > 0 ){
+										if( (motes[k].msgBuff)[ i ].currDestID == motes[k].inMsg->currSrcID ){
+											if( motes[k].inMsg->currSrcID == motes[k].dstID ){
+												printf("Got message at 450\n");
+												done = 1;
+											}
+											else{
+												motes[k].msgCopies--;
+												(motes[k].msgToSend)[ i ] = 0;
+												i = numNodes;
+												motes[k].buffExpire[ i ] = 0;
+											}
+										}
+									}
+								}
+							}
+							else{
+								/* Message had ID of 2 from relay, ignore, 
+								 * it's a copy of what I already sent out */
+							}
+							
+						}
+						else{
+							motes[k].nodesSeen[ motes[k].inMsg->currSrcID ] = 0;
+							if( motes[k].inMsg->msgType == 0 ){
+								/* If hello sent from destination node, say hello back sooner */
+								if( (motes[k].msgToSend)[ 0 ] == 2 ){
+									if( (motes[k].msgBuff)[ 0 ].finalDestID == motes[k].inMsg->currSrcID  ){
+										motes[k].sendPriority = 1;	
+									}
+								}
+
+							}
+							/* If message is a relay message */
+							else if( motes[k].inMsg->msgType == 1 ){
+								/* Relay message from a source and not a relay */
+								if( (motes[k].msgToSend)[ 0 ] == 2 && (motes[k].inMsg->srcID == motes[k].inMsg->currSrcID) ){
+									/* If destination node is ACKING back to source, replace relay message with new */
+									if( motes[k].msgBuff[ 0 ].msgID < motes[k].inMsg->msgID  ){
+										motes[k].msgBuff[ 0 ].msgID = motes[k].inMsg->msgID;
+										motes[k].msgBuff[ 0 ].msgType = 1;
+										motes[k].msgBuff[ 0 ].srcID = motes[k].inMsg->srcID;
+										motes[k].msgBuff[ 0 ].finalDestID = motes[k].inMsg->finalDestID;
+										motes[k].msgBuff[ 0 ].currSrcID = k;
+										motes[k].msgBuff[ 0 ].currDestID = motes[k].inMsg->finalDestID;
+										motes[k].msgBuff[ 0 ].numHops = motes[k].inMsg->numHops + 1;
+										motes[k].msgBuff[ 0 ].nodesFound[0] = k;
+										motes[k].msgToSend[ 0 ] = 2;							
+									}
+								}
+								/* I don't have current relay message, add new message to deliver */
+								else if( motes[k].inMsg->srcID == motes[k].inMsg->currSrcID ){
+										/* Build hello relay message */
+										motes[k].msgBuff[ 0 ].msgID = motes[k].inMsg->msgID;
+										motes[k].msgBuff[ 0 ].msgType = 1;
+										motes[k].msgBuff[ 0 ].srcID = motes[k].inMsg->srcID;
+										motes[k].msgBuff[ 0 ].finalDestID = motes[k].inMsg->finalDestID;
+										motes[k].msgBuff[ 0 ].currSrcID = k;
+										motes[k].msgBuff[ 0 ].currDestID = motes[k].inMsg->finalDestID;
+										motes[k].msgBuff[ 0 ].numHops = motes[k].inMsg->numHops + 1;
+										motes[k].msgBuff[ 0 ].nodesFound[1] = k;
+										motes[k].msgToSend[ 0 ] = 2;		
+										/*  Built ACK to let source know I got message */
+										motes[k].msgBuff[ 1 ].msgID = motes[k].inMsg->msgID;
+										motes[k].msgBuff[ 1 ].msgType = 2;
+										motes[k].msgBuff[ 1 ].srcID = motes[k].inMsg->srcID;
+										motes[k].msgBuff[ 1 ].finalDestID = motes[k].inMsg->finalDestID;
+										motes[k].msgBuff[ 1 ].currSrcID = k;
+										motes[k].msgBuff[ 1 ].currDestID = motes[k].inMsg->srcID;
+										motes[k].msgBuff[ 1 ].numHops = 1;
+										motes[k].msgBuff[ 1 ].nodesFound[0] = k;
+										motes[k].msgToSend[ 1 ] = 2;	
+								}
+								else{
+									/* Message recieved was from another relay node, ignore */
+								}	
+							}
+							/* Got ACK from destination node, remove relay message from buffer */
+							else{
+								if( motes[k].inMsg->currDestID == motes[k].dstID ){
+									(motes[k].msgToSend)[ i ] = 0;
+								}
+								
+							}
+						}
+						
+						
+					}
+					else{
+						if( motes[k].status == 1 ){
+							bufferPtr = 0;
+							
+							for( i=0,j=0; i<numNodes; i++ ){
+								
+								if( j < 1 && ((motes[k].msgToSend)[ i ] == 1) 
+										&& ( motes[k].buffExpire[ bufferPtr ] == 0 ) ){
+									j++;
+									bufferPtr = i;
+								}
+								if( (motes[k].msgToSend)[ i ] == 2 ){
+									bufferPtr = i;
+									i = numNodes;
+								}
+							}
+							if( (motes[k].helloTimer == 0) && (bufferPtr == 0) ){
+								motes[k].helloMsg.msgID = 0;
+								motes[k].helloMsg.msgType = 0;
+								motes[k].helloMsg.srcID = -1;
+								motes[k].helloMsg.finalDestID = -1;
+								motes[k].helloMsg.currSrcID = k;
+								motes[k].helloMsg.currDestID = -1;
+								motes[k].helloMsg.numHops = -1;	
+
+								motes[k].outMsg = &motes[k].helloMsg;		
+							}
+							if( bufferPtr != 0 ){
+								motes[k].outMsg = &motes[k].msgBuff[ bufferPtr ];
+								motes[k].buffExpire[ bufferPtr ] = ACK_WAIT;
+
+							}
+						}
+						else{
+							if( (motes[k].helloTimer == 0) && (((motes[k].msgToSend)[ 0 ] == 0) 
+									|| ((motes[k].msgToSend)[ 1 ] == 0)) ){
+								motes[k].helloMsg.msgID = 0;
+								motes[k].helloMsg.msgType = 0;
+								motes[k].helloMsg.srcID = -1;
+								motes[k].helloMsg.finalDestID = -1;
+								motes[k].helloMsg.currSrcID = k;
+								motes[k].helloMsg.currDestID = -1;
+								motes[k].helloMsg.numHops = -1;	
+
+								motes[k].outMsg = &motes[k].helloMsg;		
+
+							}
+							else if( (motes[k].msgToSend)[ 1 ] != 0 ){
+								(motes[k].outMsg)->msgID = motes[k].msgBuff[ 1 ].msgID;
+								(motes[k].outMsg)->msgType = (motes[k].msgBuff)[ 1 ].msgType;
+								(motes[k].outMsg)->srcID = (motes[k].msgBuff)[ 1 ].srcID;
+								(motes[k].outMsg)->finalDestID = (motes[k].msgBuff)[ 1 ].finalDestID;
+								(motes[k].outMsg)->currSrcID = (motes[k].msgBuff)[ 1 ].currSrcID;
+								(motes[k].outMsg)->currDestID = (motes[k].msgBuff)[ 1 ].currDestID;
+								(motes[k].outMsg)->numHops = (motes[k].msgBuff)[ 1 ].numHops;			
+								motes[k].sendPriority = 1;				
+							}
+							else{
+								if( (motes[k].msgToSend)[ 0 ] != 0 ){
+									(motes[k].outMsg)->msgID = (motes[k].msgBuff)[ 0 ].msgID;
+									(motes[k].outMsg)->msgType = (motes[k].msgBuff)[ 0 ].msgType;
+									(motes[k].outMsg)->srcID = (motes[k].msgBuff)[ 0 ].srcID;
+									(motes[k].outMsg)->finalDestID = (motes[k].msgBuff)[ 0 ].finalDestID;
+									(motes[k].outMsg)->currSrcID = (motes[k].msgBuff)[ 0 ].currSrcID;
+									(motes[k].outMsg)->currDestID = (motes[k].msgBuff)[ 0 ].currDestID;
+									(motes[k].outMsg)->numHops = (motes[k].msgBuff)[ 0 ].numHops;
+									i=0;
+									while( ((motes[k].msgBuff)[ 0 ].nodesFound[i] != -1) && i<numNodes ){
+										((motes[k].outMsg)->nodesFound)[i] = (motes[k].msgBuff)[ 0 ].nodesFound[i];
+									}
+								
+								}
+
+							}
+						}
+					}	
+				}	
+				/* Decrement timer for sending out next hello */
+				if( motes[k].sendPriority == 1 ){
+					motes[k].helloTimer = 0;
+					motes[k].sendPriority = 0;
+				}
+				else{
+					if( motes[k].helloTimer == 0 ){
+						motes[k].helloTimer = HELLO_WAIT;
+					}
+					else{
+						motes[k].helloTimer--;
+					}		
+				}
+					
+				
+				for( i=0; i<numNodes; i++ ){
+					
+					if( motes[k].nodesSeen[ i ] < SEEN_TIME_MAX ){
+						motes[k].nodesSeen[ i ]++;
+					}
+						
+					if( motes[k].buffExpire[ i ] > 0 ){
+						motes[k].buffExpire[ i ]--;
+					}	
+				}
+				motes[k].inMsg = 0;
+				
 				/************* END OF PROTOCOL *************/
 				if( done == 1 ){
 					k = numNodes;
