@@ -17,6 +17,8 @@ implementation {
 	SaWC.AMControl -> ActiveMessageC;
 	SaWC.Leds -> LedsC;
 	SaWC.AMSend -> AMSenderC;
+  SaWC.AMPacket -> AMSenderC;
+  SaWC.Packet -> AMSenderC;
 	SaWC.Receive -> AMReceiverC;
 
 	AppC.AMSend -> SaWC.AppSendQueue;

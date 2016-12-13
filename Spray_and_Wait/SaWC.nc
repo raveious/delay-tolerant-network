@@ -12,6 +12,7 @@ module SaWC {
 		interface Receive;
 		interface SplitControl as AMControl;
 		interface Timer<TMilli> as BroadcastTimer;
+		interface AMPacket;
 		interface Packet;
 		interface Leds;
 	}
@@ -40,14 +41,23 @@ implementation {
 	event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
 		// TODO check the type of packet, probably reply with another msg
 
-		if (len == sizeof(SprayAndWaitMsg_t)) {
+		if (len == sizeof(SprayAndWaitMsg_t) && (call AMPacket.isForMe(msg))) {
 			SprayAndWaitMsg_t* saw = (SprayAndWaitMsg_t*)payload;
+			am_addr_t source = call AMPacket.source(msg);
 
 			if (saw->rout_stat == BROADCAST_STATE) {
-				call Leds.led1On();
+				saw->rout_stat = WILLING_STATE;
 
+				if (call AMSend.send(source, msg, len) == SUCCESS) {
+					call Leds.led1On();
+					busy = TRUE;
+				}
 			} else if (saw->rout_stat == WILLING_STATE) {
+				saw->rout_stat = SPRAYED_STATE;
 
+				if (call AMSend.send(source, msg, len) == SUCCESS) {
+					busy = TRUE;
+				}
 			} else if (saw->rout_stat == SPRAYED_STATE) {
 				call Leds.led1Off();
 			} else {
