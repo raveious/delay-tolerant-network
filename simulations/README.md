@@ -62,7 +62,7 @@ To run the simulation use the following command line arguments:
  * the ID of the final destination node
  * the number of copies the source has left to give
  * Nodes will ignore the message if they are not the destination node and if there are no copies left
-* 
+
 
 ###Output:
 
