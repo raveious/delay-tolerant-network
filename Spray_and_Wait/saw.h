@@ -18,6 +18,7 @@ typedef nx_struct SprayAndWaitMsg {
 	nx_uint16_t srcNodeID;
 	nx_uint16_t destNodeID;
 	nx_uint8_t rout_stat;
+	nx_uint8_t ACK;
 } SprayAndWaitMsg_t;
 
 typedef struct SaWQueueItem {
