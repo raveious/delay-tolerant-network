@@ -3,13 +3,21 @@ module AppC {
 		interface Leds;
 		interface Boot;
 		interface AMSend;
+		interface Receive;
 	}
 }
 implementation {
 	event void Boot.booted() {
+		// TODO send data to the destination
 	}
 
 	event void AMSend.sendDone(message_t* msg, error_t err) {
-		// TODO Only decrement the available copies
+	}
+
+	event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
+		// TODO Send ACK back
+
+		// denote that a packet was received
+		call Leds.led2On();
 	}
 }
