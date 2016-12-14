@@ -116,6 +116,10 @@ implementation {
 			// prep the rest of the payload
 			SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call Packet.getPayload(temp, sizeof(SprayAndWaitMsg_t)));
 
+			if (ptr == NULL) {
+				return FAIL;
+			}
+
 			// TODO Make UUID actually useful with a random number or something
 			ptr->uuid = 1;
 			ptr->destNodeID = TOS_NODE_ID;
