@@ -10,10 +10,15 @@ module AppC {
 }
 implementation {
 	event void Boot.booted() {
-		message_t data;
-		SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call AMSend.getPayload(&data, sizeof(SprayAndWaitMsg_t)));
+		// Only node 0 will try to send data, everyone else will be a relay
+		if (TOS_NODE_ID == 0) {
+			message_t data;
+			SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call AMSend.getPayload(&data, sizeof(SprayAndWaitMsg_t)));
 
-		if (call AMSend.send(10, &data, sizeof(SprayAndWaitMsg_t)) == SUCCESS) {
+			// Try sending data to node 10
+			call AMSend.send(10, &data, sizeof(SprayAndWaitMsg_t));
+		} else {
+			call Leds.led0On();
 		}
 	}
 
