@@ -2,7 +2,7 @@
 #define __SPRAY_AND_WAIT_HEADER__
 
 #define SPRAY_WIDTH 2
-#define BROADCAST_INTERVAL 500 // in milli-seconds
+#define BROADCAST_INTERVAL 1000 // in milli-seconds
 #define MAX_PACKET_BUFFER 2
 
 #define AM_SPRAYNWAIT 6
