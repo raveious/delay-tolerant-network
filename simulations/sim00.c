@@ -17,6 +17,8 @@
 #define START_TIME 40
 #define ACK_WAIT 10
 #define SEEN_TIME_MAX 50
+#define TIMECONVERT 1.5 // 1.5 ms
+
 
 
 /*
@@ -652,15 +654,15 @@ int main(int argc, char *argv[]) {
 	for( i=0; i<run; i++){
 		finalAvg = finalAvg + testTimeDataSrcToDst[i];
 	}
-	finalAvg = finalAvg / run;
-	fprintf(f, "Final Results:\nAvg Src to Dst Time,%d,\n", finalAvg);
+	finalAvg = (finalAvg / run) * TIMECONVERT;
+	fprintf(f, "Final Results:\nAvg Src to Dst Time,%d,ms\n", finalAvg);
 	
 	finalAvg = 0;
 	for( i=0; i<run; i++){
 		finalAvg = finalAvg + testTimeDataDstToSrc[i];
 	}	
-	finalAvg = finalAvg / run;
-	fprintf(f, "Avg Dst to Src Time,%d\n", finalAvg);
+	finalAvg = (finalAvg / run) * TIMECONVERT;
+	fprintf(f, "Avg Dst to Src Time,%d,ms\n", finalAvg);
 	
 	finalAvg = 0;
 	for( i=0; i<run; i++){
