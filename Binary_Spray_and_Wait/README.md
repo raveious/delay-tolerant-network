@@ -33,7 +33,15 @@ $ make telosb install,n
 
 where `n` is the optional node ID.
 
-Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device. Virtual Machine users will also have to allow the virtual machine access to the USB serial device so that it can be programmed from within the virtual machine. You may also need to be a member of the VMs group (i.e. `vboxsf` for Oracle Virtual Box) if this is checked out in a shaired directory with host machine.
+Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device.
+
+### Virtual Box
+
+In your guest operating system, your user will have to be allowed the virtual machine access to the USB serial device so that it can be programmed from within the virtual machine. To capture more than one TelosB mote, leave the `Serial No.` field blank to capture all of them.
+
+![USB CONFIG](/doc/VirtualBox_USB_config.JPG)
+
+You may also need to be a member of the VMs group (i.e. `vboxsf` for Oracle Virtual Box) if this is checked out in a shaired directory with host machine.
 
 ## Testing Procedure
 

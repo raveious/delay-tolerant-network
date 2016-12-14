@@ -46,7 +46,7 @@ $ ./develop.sh
 
 Any issues with this, refer to the [alternate instructions](https://github.com/tinyos/tinyos-main#note-new-make-system-and-tinyos-tools) and report issues to the [TinyOS][1] mainline repository.
 
-Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device. Virtual Machine users will also have to allow the virtual machine access to the USB serial device so that it can be programmed from within the virtual machine. You may also need to be a member of the VMs group (i.e. `vboxsf` for Oracle Virtual Box) if this is checked out in a shaired directory with host machine.
+Note: You will need to be a member of the `dialout` group in order to write code to the USB serial device.
 
  [1]: https://github.com/tinyos/tinyos-main
  [2]: https://en.wikipedia.org/wiki/Delay-tolerant_networking
