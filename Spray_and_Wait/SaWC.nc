@@ -111,7 +111,7 @@ implementation {
 			return EBUSY;
 		} else {
 			// Put msg into queue for transmission.
-			message_t* temp = memcpy(&buffer[stored - 1], msg, sizeof(message_t));
+			message_t* temp = memcpy(&buffer[stored], msg, sizeof(message_t));
 
 			// prep the rest of the payload
 			SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call Packet.getPayload(temp, sizeof(SprayAndWaitMsg_t)));
@@ -126,6 +126,8 @@ implementation {
 			// Update how many are stored int he queue
 			available[stored - 1] = SPRAY_WIDTH;
 			stored++;
+
+			signal AppSendQueue.sendDone(msg, SUCCESS);
 
 			return SUCCESS;
 		}
