@@ -124,7 +124,8 @@ implementation {
 			ptr->ACK = 0;
 
 			// Update how many are stored int he queue
-			available[stored - 1] = SPRAY_WIDTH;
+			available[stored] = SPRAY_WIDTH;
+			cacheUUID[stored] = ptr->uuid;
 			stored++;
 
 			signal AppSendQueue.sendDone(msg, SUCCESS);
