@@ -12,6 +12,8 @@
 #define SPRAYED_STATE     0x03
 #define DESTINATION_STATE 0x04
 
+#define AUTO_ACK_BACK TRUE
+
 // TODO update this to be more like a header than a whole packet
 typedef nx_struct SprayAndWaitMsg {
 	nx_uint32_t uuid;
@@ -20,10 +22,5 @@ typedef nx_struct SprayAndWaitMsg {
 	nx_uint8_t rout_stat;
 	nx_uint8_t ACK;
 } SprayAndWaitMsg_t;
-
-typedef struct SaWQueueItem {
-	SprayAndWaitMsg_t message;
-	uint8_t available;
-} SaWQueueItem_t;
 
 #endif
