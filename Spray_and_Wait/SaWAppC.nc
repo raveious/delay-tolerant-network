@@ -24,4 +24,5 @@ implementation {
 	AppC.AMSend -> SaWC.AppSendQueue;
 	AppC.Leds -> LedsC;
 	AppC.Receive -> SaWC.AppReceive;
+	AppC.Boot -> MainC.Boot;
 }
