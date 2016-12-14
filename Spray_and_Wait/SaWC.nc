@@ -32,7 +32,7 @@ implementation {
 	event void Boot.booted() {
 		call AMControl.start();
 
-		memset(buffer, 0, sizeof(message_t) * MAX_PACKET_BUFFER);
+		// memset(buffer, 0, sizeof(message_t) * MAX_PACKET_BUFFER);
 		memset(available, 0, sizeof(uint16_t) * MAX_PACKET_BUFFER);
 		memset(cacheUUID, 0, sizeof(uint32_t) * MAX_PACKET_BUFFER);
 	}
@@ -43,11 +43,18 @@ implementation {
 	}
 
 	event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
-		// TODO check the type of packet, probably reply with another msg
-
 		if (len == sizeof(SprayAndWaitMsg_t) && (call AMPacket.isForMe(msg))) {
 			SprayAndWaitMsg_t* saw = (SprayAndWaitMsg_t*)payload;
 			am_addr_t source = call AMPacket.source(msg);
+
+			// check if we have already RX this packet
+			uint8_t i;
+			for (i = 0; i < stored; i++) {
+				if (cacheUUID[i] == saw->uuid) {
+					// Do nothing if we already have that packet
+					return msg;
+				}
+			}
 
 			if (saw->destNodeID == TOS_NODE_ID) {
 				saw->ACK = 1;
