@@ -13,7 +13,7 @@ implementation {
 		// Only node 0 will try to send data, everyone else will be a relay
 		if (TOS_NODE_ID == 0) {
 			message_t data;
-			SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call AMSend.getPayload(&data, sizeof(SprayAndWaitMsg_t)));
+			// SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call AMSend.getPayload(&data, sizeof(SprayAndWaitMsg_t)));
 
 			// Try sending data to node 10
 			call AMSend.send(10, &data, sizeof(SprayAndWaitMsg_t));
