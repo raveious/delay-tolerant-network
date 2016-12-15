@@ -17,8 +17,6 @@ implementation {
 
 			// Try sending data to node 10
 			call AMSend.send(10, &data, sizeof(SprayAndWaitMsg_t));
-		} else {
-			call Leds.led0On();
 		}
 	}
 
