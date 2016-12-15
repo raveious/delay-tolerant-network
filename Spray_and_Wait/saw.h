@@ -7,10 +7,10 @@
 
 #define AM_SPRAYNWAIT 6
 
-#define BROADCAST_STATE   0x01
-#define WILLING_STATE     0x02
-#define SPRAYED_STATE     0x03
-#define DESTINATION_STATE 0x04
+#define BROADCAST_STATE   0x00
+#define WILLING_STATE     0x01
+#define SPRAYED_STATE     0x02
+#define DESTINATION_STATE 0x03
 
 #define AUTO_ACK_BACK TRUE
 
