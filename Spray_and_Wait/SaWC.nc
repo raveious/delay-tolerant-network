@@ -24,7 +24,7 @@ module SaWC {
 implementation {
 	uint16_t stored = 0;
 	bool busy = FALSE;
-	int16_t next = 1;
+	int16_t next = 0;
 	message_t buffer[MAX_PACKET_BUFFER];
 	uint16_t available [MAX_PACKET_BUFFER];
 	uint32_t cacheUUID [MAX_PACKET_BUFFER];
@@ -51,32 +51,33 @@ implementation {
 
 	event void AMSend.sendDone(message_t* msg, error_t err) {
 		call Leds.led0Off();
+		call Leds.led1Off();
 		busy = FALSE;
-
-		// SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call Packet.getPayload(msg, sizeof(SprayAndWaitMsg_t)));
 	}
 
 	event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
+		call Leds.led2Toggle();
 		if (len == sizeof(SprayAndWaitMsg_t) && (call AMPacket.isForMe(msg))) {
 			SprayAndWaitMsg_t* saw = (SprayAndWaitMsg_t*)payload;
 			am_addr_t source = call AMPacket.source(msg);
 			int16_t uuid_index = cacheCheck(saw->uuid);
 
+
 			// TODO Check for Ack back on
+			if (saw->rout_stat == BROADCAST_STATE && uuid_index < 0) {
+				if (saw->destNodeID == TOS_NODE_ID && AUTO_ACK_BACK) {
+					saw->ACK = 1;
+					saw->rout_stat = DESTINATION_STATE;
 
-			if (saw->destNodeID == TOS_NODE_ID) {
-				saw->ACK = 1;
-
-				if (call AMSend.send(source, msg, len) == SUCCESS) {
-					call Leds.led0On();
-					busy = TRUE;
-				}
-			} else if (saw->rout_stat == BROADCAST_STATE && uuid_index < 0) {
-				saw->rout_stat = WILLING_STATE;
-
-				if (call AMSend.send(source, msg, len) == SUCCESS) {
-					call Leds.led0On();
+					signal AppReceive.receive(msg, payload, len);
+				} else {
+					saw->rout_stat = WILLING_STATE;
 					call Leds.led1On();
+				}
+
+				call Leds.led2Toggle();
+				if (call AMSend.send(source, msg, len) == SUCCESS) {
+					call Leds.led0On();
 					busy = TRUE;
 				}
 			} else if (saw->rout_stat == WILLING_STATE && uuid_index >= 0 && available[uuid_index] > 0) {
@@ -84,6 +85,7 @@ implementation {
 
 				// Spray this node
 				if (call AMSend.send(source, msg, len) == SUCCESS) {
+					call Leds.led1On();
 					call Leds.led0On();
 					busy = TRUE;
 
@@ -99,10 +101,26 @@ implementation {
 					// }
 				}
 			} else if (saw->rout_stat == SPRAYED_STATE) {
+				// Sprayed !!!
+
 				saw->rout_stat = DESTINATION_STATE;
 
-				if (call AppSendQueue.send(saw->destNodeID, msg, len) == SUCCESS) {
-					call Leds.led1Off();
+				// Add sending to the destination to the constant queue
+				memcpy(&buffer[stored], msg, sizeof(message_t));
+
+				available[stored] = 1;
+				cacheUUID[stored] = saw->uuid;
+				stored++;
+			} else if (saw->rout_stat == DESTINATION_STATE) {
+				// Destination reached
+
+				signal AppReceive.receive(msg, payload, len);
+
+				if (AUTO_ACK_BACK) {
+					// if auto ack back is enabled, ack back
+					saw->rout_stat = BROADCAST_STATE;
+					saw->ACK = 1;
+					call AppSendQueue.send(saw->srcNodeID, msg, len);
 				}
 			}
 		}
@@ -112,19 +130,17 @@ implementation {
 	event void BroadcastTimer.fired() {
 		// If we have some packets to go out and we're not busy with one already...
 		if (stored > 0 && !busy) {
-			am_addr_t target = AM_BROADCAST_ADDR;
+			am_addr_t target;
 
 			SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call Packet.getPayload(&buffer[next], sizeof(SprayAndWaitMsg_t)));
-			if (ptr->rout_stat == DESTINATION_STATE) {
+			if (ptr->rout_stat == DESTINATION_STATE || available[next] <= 0) {
 				target = ptr->destNodeID;
+			} else {
+				ptr->rout_stat = BROADCAST_STATE;
+				target = AM_BROADCAST_ADDR;
 			}
 
-			if (available[next] <= 0) {
-				next++;
-				if (next >= stored) {
-					next = 0;
-				}
-			} else if (call AMSend.send(target, &buffer[next], sizeof(SprayAndWaitMsg_t)) == SUCCESS) {
+			if (call AMSend.send(target, &buffer[next], sizeof(SprayAndWaitMsg_t)) == SUCCESS) {
 				call Leds.led0On();
 				busy = TRUE;
 				next++;
