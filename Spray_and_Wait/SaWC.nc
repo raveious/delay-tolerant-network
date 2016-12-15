@@ -29,10 +29,22 @@ implementation {
 	uint16_t available [MAX_PACKET_BUFFER];
 	uint32_t cacheUUID [MAX_PACKET_BUFFER];
 
+	int16_t cacheCheck(uint32_t uuid) {
+		int16_t i;
+		// check if we have already RX this packet
+		for (i = 0; i < stored; i++) {
+			if (cacheUUID[i] == uuid) {
+				// Do nothing if we already have that packet
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	event void Boot.booted() {
 		call AMControl.start();
 
-		// memset(buffer, 0, sizeof(message_t) * MAX_PACKET_BUFFER);
+		memset(buffer, 0, sizeof(message_t) * MAX_PACKET_BUFFER);
 		memset(available, 0, sizeof(uint16_t) * MAX_PACKET_BUFFER);
 		memset(cacheUUID, 0, sizeof(uint32_t) * MAX_PACKET_BUFFER);
 	}
@@ -40,21 +52,17 @@ implementation {
 	event void AMSend.sendDone(message_t* msg, error_t err) {
 		call Leds.led0Off();
 		busy = FALSE;
+
+		// SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call Packet.getPayload(msg, sizeof(SprayAndWaitMsg_t)));
 	}
 
 	event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
 		if (len == sizeof(SprayAndWaitMsg_t) && (call AMPacket.isForMe(msg))) {
 			SprayAndWaitMsg_t* saw = (SprayAndWaitMsg_t*)payload;
 			am_addr_t source = call AMPacket.source(msg);
+			int16_t uuid_index = cacheCheck(saw->uuid);
 
-			// check if we have already RX this packet
-			uint8_t i;
-			for (i = 0; i < stored; i++) {
-				if (cacheUUID[i] == saw->uuid) {
-					// Do nothing if we already have that packet
-					return msg;
-				}
-			}
+			// TODO Check for Ack back on
 
 			if (saw->destNodeID == TOS_NODE_ID) {
 				saw->ACK = 1;
@@ -63,7 +71,7 @@ implementation {
 					call Leds.led0On();
 					busy = TRUE;
 				}
-			} else if (saw->rout_stat == BROADCAST_STATE) {
+			} else if (saw->rout_stat == BROADCAST_STATE && uuid_index < 0) {
 				saw->rout_stat = WILLING_STATE;
 
 				if (call AMSend.send(source, msg, len) == SUCCESS) {
@@ -71,21 +79,31 @@ implementation {
 					call Leds.led1On();
 					busy = TRUE;
 				}
-			} else if (saw->rout_stat == WILLING_STATE) {
+			} else if (saw->rout_stat == WILLING_STATE && uuid_index >= 0 && available[uuid_index] > 0) {
 				saw->rout_stat = SPRAYED_STATE;
 
+				// Spray this node
 				if (call AMSend.send(source, msg, len) == SUCCESS) {
 					call Leds.led0On();
 					busy = TRUE;
+
+					// Update the number of available copies
+					available[uuid_index]--;
+
+					// TODO clean out the packet
+					// if (available[uuid_index] == 0) {
+					// 	cacheUUID[uuid_index] = 0;
+					// 	memset(&buffer[uuid_index], 0, sizeof(message_t));
+					// 	memcpy(&buffer[uuid_index], &buffer[uuid_index + 1], sizeof(message_t) * (stored - uuid_index));
+					// 	stored--;
+					// }
 				}
 			} else if (saw->rout_stat == SPRAYED_STATE) {
-				call Leds.led0On();
-				call Leds.led1Off();
-			} else {
-				if (AUTO_ACK_BACK) {
+				saw->rout_stat = DESTINATION_STATE;
 
+				if (call AppSendQueue.send(saw->destNodeID, msg, len) == SUCCESS) {
+					call Leds.led1Off();
 				}
-				signal AppReceive.receive(msg, payload, len);
 			}
 		}
 		return msg;
@@ -94,12 +112,23 @@ implementation {
 	event void BroadcastTimer.fired() {
 		// If we have some packets to go out and we're not busy with one already...
 		if (stored > 0 && !busy) {
+			am_addr_t target = AM_BROADCAST_ADDR;
 
-			if (call AMSend.send(AM_BROADCAST_ADDR, &buffer[next], sizeof(SprayAndWaitMsg_t)) == SUCCESS) {
+			SprayAndWaitMsg_t* ptr = (SprayAndWaitMsg_t*)(call Packet.getPayload(&buffer[next], sizeof(SprayAndWaitMsg_t)));
+			if (ptr->rout_stat == DESTINATION_STATE) {
+				target = ptr->destNodeID;
+			}
+
+			if (available[next] <= 0) {
+				next++;
+				if (next >= stored) {
+					next = 0;
+				}
+			} else if (call AMSend.send(target, &buffer[next], sizeof(SprayAndWaitMsg_t)) == SUCCESS) {
 				call Leds.led0On();
 				busy = TRUE;
 				next++;
-				if (next >= MAX_PACKET_BUFFER) {
+				if (next >= stored) {
 					next = 0;
 				}
 			}
@@ -122,8 +151,8 @@ implementation {
 
 			// TODO Make UUID actually useful with a random number or something
 			ptr->uuid = 1;
-			ptr->destNodeID = TOS_NODE_ID;
-			ptr->srcNodeID = addr;
+			ptr->srcNodeID = TOS_NODE_ID;
+			ptr->destNodeID = addr;
 			ptr->rout_stat = BROADCAST_STATE;
 			ptr->ACK = 0;
 
