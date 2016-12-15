@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <time.h>       
 
-#define SIZE_MAX 100
+#define SIZE_MAX 120
 #define HELLO_WAIT 3
 #define START_TIME 40 // How long into the simulation 
                       // before Source starts spraying
@@ -316,12 +316,12 @@ int main(int argc, char *argv[]) {
 										if( motes[k].msgCopies > 1 ){
 
 											motes[k].msgCopies = motes[k].msgCopies - (srcCopies / divider);
-											.numCopies);
+											
 										}
 										else{
 
 											motes[k].msgCopies = 0;
-										;
+										
 										}									
 										
 										
