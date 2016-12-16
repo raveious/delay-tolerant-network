@@ -1,0 +1,15 @@
+Scenario.name = SprayAndWait
+Group.router = SprayAndWaitRouter
+
+btInterface.transmitRange = 200
+
+Scenario.nrofHostGroups = 1
+Group.nrofHosts=40
+SprayAndWaitRouter.nrofCopies = 6
+SprayAndWaitRouter.binaryMode = true
+
+Group.msgTtl = 150
+
+Events1.interval = 2200
+Events1.hosts = 0,19
+

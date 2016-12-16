@@ -1,0 +1,13 @@
+Scenario.name = SprayAndFocus
+Group.router = SprayAndFocusRouter
+
+btInterface.transmitRange = 200
+
+Scenario.nrofHostGroups = 1
+Group.nrofHosts=10
+SprayAndFocusRouter.nrofCopies = 6
+SprayAndFocusRouter.binaryMode = true
+
+Events1.interval = 2200
+Events1.hosts = 0,9
+

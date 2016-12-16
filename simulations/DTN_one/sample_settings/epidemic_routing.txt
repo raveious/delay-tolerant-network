@@ -1,0 +1,13 @@
+Scenario.name = EpidemicRouter 
+Group.router = EpidemicRouter 
+Scenario.nrofHostGroups = 1
+Group.nrofHosts=10
+
+btInterface.transmitRange = 200
+
+SprayAndFocusRouter.nrofCopies = 10
+SprayAndFocusRouter.binaryMode = true
+
+Events1.interval = 2200
+Events1.hosts = 0,9
+
